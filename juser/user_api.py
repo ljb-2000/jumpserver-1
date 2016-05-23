@@ -81,9 +81,9 @@ def db_add_user(**kwargs):
     if groups_post:
         group_select = []
         for group_id in groups_post:
-            group = UserGroup.objects.filter(id=group_id)
+            group = CMDB_Group.objects.filter(id=group_id)
             group_select.extend(group)
-        user.group = group_select
+        user.group_asset = group_select
 
     if admin_groups and role == 'GA':  # 如果是组管理员就要添加组管理员和组到管理组中
         for group_id in admin_groups:

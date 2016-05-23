@@ -4,11 +4,12 @@ import xlrd
 import xlsxwriter
 from django.db.models import AutoField
 from jumpserver.api import *
-from jasset.models import ASSET_STATUS, ASSET_TYPE, ASSET_ENV, IDC, AssetRecord,ASSET_SALT_STATUS,ASSET_SSHKEY_STATUS,CompanyName,DepartmentName,BusinessName,AssetRelation
+from jasset.models import ASSET_STATUS, ASSET_TYPE, ASSET_ENV, IDC, AssetRecord,ASSET_SALT_STATUS,ASSET_SSHKEY_STATUS,CompanyName,DepartmentName,BusinessName,AssetRelation,CMDB_PermRule
 from jperm.ansible_api import MyRunner
 from jperm.perm_api import gen_resource
 from jumpserver.templatetags.mytags import get_disk_info
-
+#导入juser应用的用户表,控制CMDB主机访问
+from juser.models import CMDB_Group
 
 def group_add_asset(group, asset_id=None, asset_ip=None):
     """
@@ -733,3 +734,31 @@ def asset_ansible_update_all():
     asset_all = Asset.objects.all()
     asset_ansible_update(asset_all, name)
 
+def company_id_filter_business(company_name_id):
+    business =  AssetRelation.objects.all().filter(company_name_id__exact=company_name_id)
+    businesst_id_list = []
+    for business_list in business:
+        businesst_id_list.append(business_list.business_name_id)
+    return businesst_id_list
+def check_business_manager_level_user(company_name_id,role_type_id):
+    user_name_list = []
+    group_id_list = []
+    acl_check = CMDB_PermRule.objects.filter(company_name_id__exact=company_name_id).filter(role_type_id__exact=role_type_id)
+    #通过以上条件过滤的行，在获取用名字段和用户组字段，再通过用户组字段获取这些用户组对应的用户名列表
+    for acl_list in acl_check:
+        user_name_list.append(acl_list.user_name)
+        group_id_list.append(acl_list.group_id)
+    print "jasset.asset_api.py:group_id_list:751:",group_id_list
+    #去掉用户组的ID列中元素值为空的元素
+    func1 = lambda x,y:x if y == '' else x + [y]
+    group_id_list = reduce(func1, [[], ] + group_id_list)
+    print "jasset.asset_api.py:group_id_list:755:",group_id_list
+    for group_id in group_id_list:
+        user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+        for list in user_name_obj:
+            user_name_list.append(list.name)
+    #去掉重复的用户名
+    func = lambda x,y:x if y in x else x + [y]
+    user_name_list = reduce(func, [[], ] + user_name_list)
+    print "jasset.asset_api.py:user_name_list:763:",user_name_list
+    return user_name_list

@@ -143,9 +143,13 @@ def group_list(request):
     user_id = request.user.id
     company_name = request.user.company_name
     company_id = request.user.company_name_id
+    #只显示本公司的用户组
+    if username != 'admin':
+        user_group_list = user_group_list.filter(company_name_id__exact=company_id)
     #根据用户ID，查询用户是否在公司管理员组，部门管理员组，业务管理员组，若在这3种类型的组中，则显示组的添加，删除，编辑按钮
     #根据公司ID，再通过查询perlrule表，过滤权限类型ID为1,2,3类型的ID，过滤关键字1为公司ID，过滤关键字2为权限类型ID
-    role_type_list = [1,2,3]
+    role_type_list = cmdb_group_check(company_name_id=company_id,user_id=user_id)
+    print "juser.views.py:role_type_list:149:",role_type_list
     user_name_list = []
     group_id_list = []
     acl_check = CMDB_PermRule.objects.filter(company_name_id__exact=company_id).filter(role_type_id__in=role_type_list)
@@ -158,15 +162,25 @@ def group_list(request):
     func1 = lambda x,y:x if y == '' else x + [y]
     group_id_list = reduce(func1, [[], ] + group_id_list)
     print "juser.views.py:group_id_list:131:",group_id_list
-    for group_id in group_id_list:
-        user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+    for group_id_for_user in group_id_list:
+        user_name_obj = get_object(CMDB_Group, id=int(group_id_for_user)).user_set.all()
         for list in user_name_obj:
             user_name_list.append(list.name)
     #去掉重复的用户名
     func = lambda x,y:x if y in x else x + [y]
     user_name_list = reduce(func, [[], ] + user_name_list)
     print "juser.views.py:user_name_list:136:",user_name_list
-    #查询该用户是否在以上用户列表中
+    #根据role_type_list显示的用户类型过滤用户组
+    group_type_list = []
+    for role_type in role_type_list:
+        if role_type == 1:
+            group_type_list.append('DM')
+        if role_type == 2:
+            group_type_list.append('BM')
+    print "juser.views.py:group_type_list:177:",group_type_list
+    if username != 'admin':
+        if group_type_list:
+            user_group_list = user_group_list.filter(group_type__in=group_type_list)
     if keyword:
         user_group_list = user_group_list.filter(Q(name__icontains=keyword) | Q(comment__icontains=keyword))
 
@@ -246,8 +260,29 @@ def user_add(request):
     msg = ''
     header_title, path1, path2 = '添加用户', '用户管理', '添加用户'
     user_role = {'SU': u'超级管理员', 'CU': u'普通用户', 'GA': u'组管理员'}
-    group_all = UserGroup.objects.all()
+    group_all = CMDB_Group.objects.all()
     company_all = CompanyName.objects.all()
+    #获取对应的用户名,通过用户名获取对应的公司名称
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id = request.user.company_name_id
+    #获取该公司下面对应的部门
+    if username != 'admin':
+        company_all = company_all.filter(id__exact=company_id)
+    #根据用户是公司管理员，部门管理员,业务管理员获取对应的权限类型
+    role_type_list = cmdb_group_check(company_name_id=company_id,user_id=user_id)
+    #根据role_type_list显示的用户类型过滤用户组
+    group_type_list = []
+    for role_type in role_type_list:
+        if role_type == 1:
+            group_type_list.append('DM')
+        if role_type == 2:
+            group_type_list.append('BM')
+    print "juser.views.py:group_type_list:177:",group_type_list
+    if username != 'admin':
+        if group_type_list:
+            group_all = group_all.filter(group_type__in=group_type_list).filter(company_name_id__exact=company_id)
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = PyCrypt.gen_rand_pass(16)
@@ -292,7 +327,7 @@ def user_add(request):
                 if groups:
                     user_groups = []
                     for user_group_id in groups:
-                        user_groups.extend(UserGroup.objects.filter(id=user_group_id))
+                        user_groups.extend(CMDB_Group.objects.filter(id=user_group_id))
 
             except IndexError, e:
                 error = u'添加用户 %s 失败 %s ' % (username, e)

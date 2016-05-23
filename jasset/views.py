@@ -10,7 +10,8 @@ from jperm.perm_api import get_group_asset_perm, get_group_user_perm
 import json
 from django.http import HttpResponse
 #导入juser应用的用户表,控制CMDB主机访问
-from juser.models import User
+from juser.models import User,CMDB_Group
+from juser.user_api import cmdb_group_check
 
 @require_role('admin')
 def group_add(request):
@@ -267,7 +268,7 @@ def asset_list(request):
     asset list view
     """
     header_title, path1, path2 = u'查看资产', u'资产管理', u'查看资产'
-    username = request.user.username
+    # username = request.user.username
     user_perm = request.session['role_id']
     idc_all = IDC.objects.filter()
     asset_group_all = AssetGroup.objects.all()
@@ -294,7 +295,26 @@ def asset_list(request):
     asset_id_all = request.GET.getlist("id", '')
     company_all = CompanyName.objects.all()
     asset_env = ASSET_ENV
-
+    #通过获取用户名，用户的公司ID,过滤业务名称列表
+    username = request.user.name
+    user_id = request.user.id
+    company_name_from_user = request.user.company_name
+    company_id_from_user = request.user.company_name_id
+    #获取该公司业务管理的所有用户列表
+    user_name_list = check_business_manager_level_user(company_name_id=company_id_from_user,role_type_id=3)
+    if username != 'admin':
+        #如果company_id为空，则置空asset_find变量
+        if company_id == None:
+            asset_find = []
+        company_all = company_all.filter(id__exact=company_id_from_user)
+        #通过公司的id,过滤部门的ID信息
+        department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id)
+        #根据公司id,获取部门ID
+        department_id_list = []
+        for department_list in department:
+            department_id_list.append(department_list.department_name_id)
+        #部门ID去重，根据部门ID查询对应的部门信息
+        department_select = DepartmentName.objects.filter(pk__in=department_id_list)
     if group_id:
         group = get_object(AssetGroup, id=group_id)
         if group:
@@ -378,7 +398,8 @@ def asset_list(request):
         if idc:
             asset_find = Asset.objects.filter(idc=idc)
     else:
-        if user_perm != 0:
+        # if user_perm != 0:
+        if username == 'admin':
             asset_find = Asset.objects.all()
         else:
             asset_id_all = []
@@ -830,6 +851,37 @@ def company_list(request):
     keyword = request.GET.get('keyword', '')
     company_name_list = CompanyName.objects.all()
     company_id = request.GET.get('id')
+    #获取对应的用户名,通过用户名获取对应的公司名称
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id_from_user = request.user.company_name_id
+    #获取该公司下面对应的部门
+    if username != 'admin':
+        company_name_list = company_name_list.filter(id__exact=company_id_from_user)
+    #过滤条件1：公司ID，过滤对象:cmdb_group,获取该用户属于那些类型的组,是公司组或部门组或业务组
+    role_type_list = cmdb_group_check(company_name_id=company_id_from_user,user_id=user_id)
+    print "juser.views.py:role_type_list:844:",role_type_list
+    user_name_list = []
+    group_id_list = []
+    acl_check = CMDB_PermRule.objects.filter(company_name_id__exact=company_id_from_user).filter(role_type_id__in=role_type_list)
+    #通过以上条件过滤的行，在获取用名字段和用户组字段，再通过用户组字段获取这些用户组对应的用户名列表
+    for acl_list in acl_check:
+        user_name_list.append(acl_list.user_name)
+        group_id_list.append(acl_list.group_id)
+    print "juser.views.py:group_id_list:852:",group_id_list
+    #去掉用户组的ID列中元素值为空的元素
+    func1 = lambda x,y:x if y == '' else x + [y]
+    group_id_list = reduce(func1, [[], ] + group_id_list)
+    print "juser.views.py:group_id_list:856:",group_id_list
+    for group_id in group_id_list:
+        user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+        for list in user_name_obj:
+            user_name_list.append(list.name)
+    #去掉重复的用户名
+    func = lambda x,y:x if y in x else x + [y]
+    user_name_list = reduce(func, [[], ] + user_name_list)
+    print "juser.views.py:user_name_list:864:",user_name_list
     if company_id:
         company_name_list = company_name_list.filter(id=company_id)
     if keyword:
@@ -873,9 +925,9 @@ def department_add(request):
     user_id = request.user.id
     company_name = request.user.company_name
     #获取CMDB规则表中权限类型ID为1,公司名称为公司1的规则行
+    #过滤公司名称，只显示本公司的部门信息
     if username != 'admin':
        company_all = company_all.filter(name=company_name)
-    #过滤公司名称，只显示本公司的部门信息
 
     if request.method == 'POST':
         name = request.POST.get('name', '')
@@ -974,14 +1026,23 @@ def department_list(request):
     #获取用户的id,通过用户ID获取用户所属公司
     username = request.user.name
     user_id = request.user.id
-    #获取CMDB规则表中权限类型ID为1,公司名称为公司1的规则行
     company_name = request.user.company_name
+    company_id_from_user = request.user.company_name_id
+    #获取CMDB规则表中权限类型ID为1,公司名称为公司1的规则行
+
     perm_rule_find = perm_rule_all.filter(role_type_id=1).filter(company_name=company_name)
     user_name_list = []
     group_name_list = []
     for perm_rule in perm_rule_find:
         user_name_list.append(perm_rule.user_name)
         group_name_list.append(perm_rule.group_name)
+    #通过公司ID，显示该公司下面的所有部门
+    if company_id_from_user:
+        department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id_from_user)
+        department_id_list = []
+        for department_list in department:
+            department_id_list.append(department_list.department_name_id)
+        department_name_list = DepartmentName.objects.filter(pk__in=department_id_list)
 
     if company_id:
         department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id)
@@ -1151,6 +1212,16 @@ def business_list(request):
     department_id = request.GET.get('department_id', '')
     business_name_list = BusinessName.objects.all()
     business_id = request.GET.get('id')
+    #通过获取用户名，用户的公司ID,过滤业务名称列表
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id_from_user = request.user.company_name_id
+    if username != 'admin':
+        business_id_list = company_id_filter_business(company_name_id=company_id_from_user)
+        business_name_list = BusinessName.objects.filter(pk__in=business_id_list)
+    #过滤条件1：过滤公司1，过滤条件2：过滤角色类型ID为2的用户组
+    user_name_list = check_business_manager_level_user(company_name_id=company_id_from_user,role_type_id=2)
     if department_id:
         business =  AssetRelation.objects.all().filter(department_name_id__exact=department_id)
         business_id_list = []

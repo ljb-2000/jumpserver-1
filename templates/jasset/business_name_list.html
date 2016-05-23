@@ -26,8 +26,10 @@
                 {% endif %}
                 <div class="ibox-content">
                     <div class="">
+                        {% if username in user_name_list or username == 'admin' %}
                         <a href="{% url 'asset_business_add' %}" class="btn btn-sm btn-primary "> 添加业务名称 </a>
                         <a class="btn btn-sm btn-danger" id="del_check"> 删除所选 </a>
+                        {% endif %}
                         <form id="search_form" method="get" action="" class="pull-right mail-search">
                             <div class="input-group">
                                 <input type="text" class="form-control input-sm" id="search_input" name="keyword" placeholder="Search">
@@ -64,8 +66,10 @@
                                 <td class="text-center"> <a href="{% url 'asset_list' %}?business_id={{ asset_business.id }}">{{ asset_business.asset_set.count }}</a> </td>
                                 <td class="text-center"> {{ asset_business.comment }} </td>
                                 <td class="text-center">
+                                    {% if username in user_name_list or username == 'admin' %}
                                     <a href="{% url 'asset_business_edit' %}?id={{ asset_business.id }}" class="btn btn-xs btn-info">编辑</a>
                                     <a value="{% url 'asset_business_del' %}?id={{ asset_business.id }}" class="btn btn-xs btn-danger group_del">删除</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

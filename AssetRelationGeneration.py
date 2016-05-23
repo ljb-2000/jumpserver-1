@@ -146,7 +146,6 @@ def AssetRelationGenerationNet():
                         if data[h]['depth'] == '1':
                             for key03,value03 in data[h].iteritems():
                                 if data[i]['name'] == data[h]['name']:
-                                    #查询data[h]['parent_id']等于data[h]['id']的子节点,找这个字典，将该字典的data[h]['parent_id']值修改为data[i]['id']
                                     data[h]['parent_id'] = data[i]['parent_id']
                                 # print "data[i]['name']",data[i]['name']
                                 # print "data[h]['name']",data[h]['name']

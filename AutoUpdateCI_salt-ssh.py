@@ -222,13 +222,13 @@ def RunLog_Check(hostname,filename,lines = 1,JOB_ID=20160404031502,MAIN_TASK_JOB
 
     r = re.compile(JOB_ID+':failed',re.M)
     nums = r.findall(block[start:])
-    # print "Log Check nums",nums
+    print "Log Check nums",nums
     if len(nums):
         AutoUpdataCI_Record.objects.create(hostname=hostname, username="Salt-ssh_API", result="failed",job_id=JOB_ID,main_task_id=MAIN_TASK_JOB_ID)
-        # print  "Log Check write failed"
+        print  "Log Check write failed"
     else:
         AutoUpdataCI_Record.objects.create(hostname=hostname, username="Salt-ssh_API", result="Success",job_id=JOB_ID,main_task_id=MAIN_TASK_JOB_ID)
-        # print  "Log Check write Success"
+        print  "Log Check write Success"
 
 # 发送邮件函数
 def send_mail(to_list, sub,email_body_file):
@@ -644,7 +644,7 @@ def AutoUpdateRun_salt_ssh():
                 else:
                     asset_dict['CPU'] = None
                     print "asset_dict['CPU']",asset_dict['CPU']
-
+                    
                 print "asset_dict['CPU']",asset_dict['CPU']
                 if asset_dict['CPU']:
                     if asset_dict['CPU'] != asset_old_dict['CPUType_old']:
@@ -786,5 +786,5 @@ def RunSche_salt_ssh():
             else:
                 continue
 
-# AutoUpdateRun_salt_ssh()
-RunSche_salt_ssh()
+AutoUpdateRun_salt_ssh()
+# RunSche_salt_ssh()

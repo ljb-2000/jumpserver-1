@@ -151,7 +151,7 @@ def Root_ssh_login_Test():
         #获取当前系统的时间（级别到秒）,以记录每次执行的JOB_ID,格式为20160403234139
         now = datetime.datetime.now()
         JOB_ID01 = now.strftime("%Y%m%d%H%M%S")
-        JOB_ID = "04_"+JOB_ID01
+        JOB_ID = "03_"+JOB_ID01
         if ip in except_ip:
             continue
         global asset_info
@@ -186,7 +186,7 @@ def Root_ssh_login_Test():
                     continue
                 else:
                     logger.info("ssh_con_test_suc:%s" % ip)
-                    print "ssh_con_test_suc:",ip
+                    print "ssh_con_test_suc:%s",ip
                 #自动部署ssh-key文件
 
 

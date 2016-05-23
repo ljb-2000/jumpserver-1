@@ -1,6 +1,6 @@
 # coding:utf-8
 from django.conf.urls import patterns, include, url
-from jasset_xiaoniu.views import *
+from jasset.views import *
 
 urlpatterns = patterns('',
     url(r'^group_xiaoniu/del/$', group_del_xiaoniu, name='asset_group_del_xiaoniu'),

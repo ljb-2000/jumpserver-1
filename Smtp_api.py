@@ -3,9 +3,6 @@
 # 导入 smtplib 和 MIMEText
 import smtplib
 from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from email.mime.base import MIMEBase
-from email import encoders
 #定义发送列表
 mailto_list=["342304628@qq.com"]
 # 设置服务器名称、用户名、密码以及邮件后缀
@@ -39,7 +36,11 @@ def send_mail(to_list, sub):
 # else:
 #     print "测试失败"
 
-#同时发送附件和发送正文模块
+#发送附件模块
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
+from email import encoders
 title = 'check'
 filename = 'file_check.html'
 def send_mail_attach(to_list, sub, filename):

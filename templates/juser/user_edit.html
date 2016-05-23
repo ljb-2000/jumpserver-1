@@ -57,7 +57,7 @@
                             <div class="form-group">
                                 <label for="groups" class="col-sm-2 control-label">小组</label>
                                 <div class="col-sm-8">
-                                    <select id="groups" name="groups" class="form-control m-b" multiple size="12">
+                                    <select id="groups" name="groups" class="form-control m-b" multiple size="12" disabled="disabled">
                                         {% for group in group_all %}
                                             {% if group.id|int2str in groups_str %}
                                                 <option value="{{ group.id }}" selected>{{ group.name }}</option>
@@ -74,7 +74,7 @@
                                <label class="col-sm-2 control-label">选择公司名称<span class="red-fonts">*</span> </label>
                                 <div class="col-sm-8">
                                     <label>
-                                        <select name="company_id" class="form-control m-b input-sm" onchange="">
+                                        <select name="company_id" class="form-control m-b input-sm" onchange="" disabled="disabled">
                                             <option value="">公司名称</option>
                                             {% for company_list in company_all %}
                                                 {% ifequal company_list.name company_name %}
