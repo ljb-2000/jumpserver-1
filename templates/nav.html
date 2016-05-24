@@ -1,0 +1,248 @@
+{% if request.session.role_id == 2 %}
+<nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+        <ul class="nav" id="side-menu">
+            {% include 'nav_li_profile.html' %}
+            <li id="index">
+               <a href="{% url 'index' %}"><i class="fa fa-dashboard"></i> <span class="nav-label">仪表盘</span><span class="label label-info pull-right"></span></a>
+            </li>
+            <li id="juser">
+                <a href="#"><i class="fa fa-group"></i> <span class="nav-label">用户管理</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li class="group"><a href="{% url 'user_group_list' %}">查看用户组</a></li>
+                    <li class="user"><a href="{% url 'user_list' %}">查看用户<span class="label {% ifequal user_active_num user_total_num %}label-primary {% else %}label-warning {% endifequal %}pull-right">{{ user_active_num }}/{{ user_total_num }}</span></a></li>
+                </ul>
+            </li>
+            <li id="jasset">
+
+                <a><i class="fa fa-inbox"></i> <span class="nav-label">资产管理</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <!--新增CI项：公司名称添加:2016-05-10:start -->
+                    <li class="group"><a href="{% url 'asset_company_list' %}">查看公司名称</a></li>
+                    <li class="group"><a href="{% url 'asset_department_list' %}">查看部门名称</a></li>
+                    <li class="group"><a href="{% url 'asset_business_list' %}">查看业务名称</a></li>
+                    <!--新增CI项：公司名称添加:2016-05-10:End -->
+                    <li class="group"><a href="{% url 'asset_group_list' %}">查看资产组</a></li>
+                       <!-- <div id="tree" style="width: 200px;height: 100px;margin-left: auto;margin-right: auto;" >
+                          <ul id = "tree" class="nav nav-second-level">
+                            <span class="indent"></span><span class="fa arrow"></span>
+                            <li id="jasset"><a><span style="text-indent:-2em;margin-left:2em;"></span><span class="icon expand-icon glyphicon glyphicon-minus"></span>子资产管理</a></li>
+                            <li class ="group"><a><span style="text-indent:-2em;margin-left:2em;"></span><span style="text-indent:-2em;margin-left:2em;"></span>子子资产管理<span class="fa arrow"></span></a></li>
+                          </ul>
+                        </div>-->
+                    <li class="asset"> <a href="{% url 'asset_list' %}">查看资产<span class="label label-info pull-right">{{ host_active_num }}/{{ host_total_num}}</span></a></li>
+                    <li class="idc"> <a href="{% url 'idc_list' %}">查看机房</a></li>
+                </ul>
+            </li>
+
+             <li id="jasset_xiaoniu">
+                <a><i class="fa fa-inbox"></i> <span class="nav-label">小牛主机资产管理</span><span class="fa arrow"></span></a>
+                <ul id = "tree_asset" class="tree">
+
+                </ul>
+
+            </li>
+
+
+            <li id="jperm">
+                <a href="#"><i class="fa fa-edit"></i> <span class="nav-label">授权管理</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li class="sudo">
+                        <a class="sudo" href="{% url 'sudo_list' %}">Sudo</a>
+                    </li>
+                    <li class="role">
+                        <a href="{% url 'role_list' %}">系统用户</a>
+                    </li>
+                    <li class="rule">
+                        <a href="{% url 'rule_list' %}">授权规则</a>
+                    </li>
+                </ul>
+            </li>
+            <li id="jlog">
+               <a href="{% url 'log_list' 'online' %}"><i class="fa fa-files-o"></i> <span class="nav-label">日志审计</span><span class="label label-info pull-right"></span></a>
+            </li>
+            <li id="file">
+                <a href="#"><i class="fa fa-download"></i> <span class="nav-label">上传下载</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li class="upload"><a href="{% url 'file_upload' %}">文件上传</a></li>
+                    <li class="download"><a href="{% url 'file_download' %}">文件下载</a></li>
+                </ul>
+            </li>
+            <li id="setting">
+                   <a href="{% url 'setting' %}"><i class="fa fa-gears"></i> <span class="nav-label">设置</span><span class="label label-info pull-right"></span></a>
+            </li>
+            <li class="special_link">
+                <a href="http://www.jumpserver.org" target="_blank"><i class="fa fa-database"></i> <span class="nav-label">访问官网</span></a>
+            </li>
+        </ul>
+
+    </div>
+</nav>
+{% endif %}
+
+{% if request.session.role_id == 0 %}
+<nav class="navbar-default navbar-static-side" role="navigation">
+    <div class="sidebar-collapse">
+        <ul class="nav" id="side-menu">
+            {% include 'nav_li_profile.html' %}
+            <li id="juser">
+               <a href="{% url 'user_detail' %}"><i class="fa fa-dashboard"></i> <span class="nav-label">仪表盘</span><span class="label label-info pull-right"></span></a>
+            </li>
+            <li id="jasset">
+               <a href="{% url 'asset_list' %}"><i class="fa fa-inbox"></i> <span class="nav-label">查看主机</span><span class="label label-info pull-right"></span></a>
+            </li>
+            <li id="file">
+                <a href="#"><i class="fa fa-download"></i> <span class="nav-label">上传下载</span><span class="fa arrow"></span></a>
+                <ul class="nav nav-second-level">
+                    <li class="upload"><a href="{% url 'file_upload' %}">文件上传</a></li>
+                    <li class="download"><a href="{% url 'file_download' %}">文件下载</a></li>
+                </ul>
+            </li>
+
+            <li class="special_link">
+                <a href="http://www.jumpserver.org" target="_blank"><i class="fa fa-database"></i> <span class="nav-label">访问官网</span></a>
+            </li>
+        </ul>
+    </div>
+</nav>
+{% endif %}
+
+  <script>
+    $(document).on('ready',function(){
+
+   /* var data = [{"id": "1", "name": "<span>name_1Collpase</span>", "parent_id": "0", "depth": "0"},
+    {"id": "2", "name": "<span>name_2Collpase</span>", "parent_id": "0", "depth": "0"},
+    {"id": "3", "name": "<span>name_3查看资产组</span>", "parent_id": "2", "depth": "1"},
+    {"id": "4", "name": "name_4<a href='{% url 'asset_list' %}'>查看服务器列表</a>", "parent_id": "1", "depth": "1"},
+    {"id": "5", "name": "name_5<a href='{% url 'asset_group_list' %}'> 查看资产组</a>", "parent_id": "3", "depth": "2"},
+
+    ];*/
+
+    var endMenu =getMenu("0");
+    function getMenu( parentID ){
+           return {{data_01|safe}}.filter(function(node){ return ( node.parent_id === parentID ) ; }).map(function(node){
+               var exists = {{data_01|safe}}.some(function(childNode){  return childNode.parent_id === node.id; });
+               var subMenu = (exists) ? '<ul>'+ getMenu(node.id).join('') + '</ul>' : "";
+               return '<li>'+'<span>'+node.name+'</span>' +  subMenu + '</li>' ;
+           });
+    }
+    //生成树形列表操作
+    $('#tree_asset').html('<ul>'+endMenu.join('')+ '</ul>');
+    //为节点添加展开，关闭的操作--在节点添加事件检测的class
+    $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+    //检测页面的事件，执行节点展开和折叠动作
+    $('.tree li.parent_li > span').on('click', function (e) {
+        var children = $(this).parent('li.parent_li').find(' > ul > li');
+        if (children.is(":visible")) {
+            children.hide('fast');
+            $(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+        } else {
+            children.show('fast');
+            $(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
+        }
+        e.stopPropagation();
+    });
+   })
+  </script>
+
+<!--
+<script type="text/javascript">
+      //获取树形结构列表数据
+      function getTree() {
+       //定义数据
+                var tree = [{
+          text: "公司1",
+          nodes: [{
+            text: "部门1",
+            nodes: [{
+              text: "业务1",
+                href:"{% url 'asset_list' %}?business_id=1"
+            }, {
+              text: "业务2",
+                href: "{% url 'asset_list' %}?business_id=2"
+            }]
+          }, {
+            text: "部门2",
+              nodes:[{
+              text: "业务1"
+            }, {
+              text: "业务2",
+                href: "{% url 'asset_group_list_xiaoniu' %}"
+            }]
+          }]
+        }, {
+          text: "小牛投资管",
+            nodes: [{
+            text: "互联网产品部",
+            nodes: [{
+              text: "产品一部"
+            }, {
+              text: "产品二部",
+                href: "{% url 'asset_group_list_xiaoniu' %}"
+            }]
+          }, {
+            text: "测试运维部",
+              nodes:[{
+              text: "运维一部"
+            }, {
+              text: "运维二部",
+                href: "{% url 'asset_group_list_xiaoniu' %}"
+            }]
+          }]
+        }, {
+          text: "Parent 3"
+        }, {
+          text: "Parent 4"
+        }, {
+          text: "Parent 5"
+        }];
+        return tree;
+      }
+
+      //初始化树形结构列表
+      $('#tree').treeview({
+        data: getTree(),
+          enableLinks: true,
+      });
+
+
+      //最后一次触发节点Id
+      var lastSelectedNodeId = null;
+      //最后一次触发时间
+      var lastSelectTime = null;
+
+      //自定义业务方法
+      function customBusiness(data){
+        alert("双击获得节点名字： "+data.text);
+      }
+
+      function clickNode(event, data) {
+        if (lastSelectedNodeId && lastSelectTime) {
+          var time = new Date().getTime();
+          var t = time - lastSelectTime;
+          if (lastSelectedNodeId == data.nodeId && t < 300) {
+            customBusiness(data);
+          }
+        }
+        lastSelectedNodeId = data.nodeId;
+        lastSelectTime = new Date().getTime();
+      }
+
+      //自定义双击事件
+      function customDblClickFun(){
+        //节点选中时触发
+        $('#tree').on('nodeSelected', function(event, data) {
+          clickNode(event, data)
+        });
+        //节点取消选中时触发
+        $('#tree').on('nodeUnselected', function(event, data) {
+          clickNode(event, data)
+        });
+      }
+      $('#tree').dblclick( function () { alert("Hello World!"); });
+      $(document).ready(function() {
+        //customDblClickFun();
+      });
+    </script>
+-->
+

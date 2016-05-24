@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link rel="stylesheet" type="text/css"  href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css"  href="/static/css/asset_type_list.css">
+     <!--<script src="bootstrap-3.3.0-dist/dist/js/jquery-1.11.2.min.js"></script>-->
+    <script  src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery-2.1.1.js"></script>
+  </head>
+
+  <body>
+  <h1>Hello World</h1>
+     <div id="menu" class="tree"></div>
+  <script  type="text/javascript">
+    $(document).on('ready',function(){
+    /*var data = [{"id": "1", "name": "<span>name_1Collpase</span>", "parent_id": "0", "depth": "0"},
+    {"id": "2", "name": "<span>name_2Collpase</span>", "parent_id": "0", "depth": "0"},
+    {"id": "3", "name": "<span>name_3查看资产组</span>", "parent_id": "2", "depth": "1"},
+    {"id": "4", "name": "name_4<a href='{% url 'asset_list' %}'>查看服务器列表</a>", "parent_id": "1", "depth": "1"},
+    {"id": "5", "name": "name_5<a href='{% url 'asset_group_list' %}'> 查看资产组</a>", "parent_id": "3", "depth": "2"},
+    ];*/
+
+     /*var data=[];//创建一个数组,放置每个学生的信息,以学生的学号作为数组下标
+     var object0 = new Object();
+       object0.id = "1";
+       object0.name = "<span>公司1</span>";
+       object0.parent_id = "0";
+       object0.depth = 0;
+    data[0] = object0;
+    var object1 = new Object();
+       object1.id = "2";
+       object1.name = "<span>部门1</span>";
+       object1.parent_id = "1";
+       object1.depth = 1;
+    data[1] = object1;
+
+     var object2 = new Object();
+       object2.id = "3";
+       object2.name = "<span><a href='{% url 'asset_list' %}'>业务1</a></span>";
+       object2.parent_id = "2";
+       object2.depth = 2;
+    data[2] = object2;*/
+    var endMenu =getMenu("0");
+    function getMenu( parentID ){
+           return {{data_01|safe}}.filter(function(node){ return ( node.parent_id === parentID ) ; }).map(function(node){
+               var exists = {{data_01|safe}}.some(function(childNode){  return childNode.parent_id === node.id; });
+               var subMenu = (exists) ? '<ul>'+ getMenu(node.id).join('') + '</ul>' : "";
+               return '<li>'+'<span>'+node.name+'</span>' +  subMenu + '</li>' ;
+           });
+    }
+    //生成树形列表操作
+    $('#menu').html('<ul>'+endMenu.join('')+ '</ul>');
+    //为节点添加展开，关闭的操作--在节点添加事件检测的class
+    $('.tree li:has(ul)').addClass('parent_li').find(' > span').attr('title', 'Collapse this branch');
+    //检测页面的事件，执行节点展开和折叠动作
+    $('.tree li.parent_li > span').on('click', function (e) {
+        var children = $(this).parent('li.parent_li').find(' > ul > li');
+        if (children.is(":visible")) {
+            children.hide('fast');
+            $(this).attr('title', 'Expand this branch').find(' > i').addClass('icon-plus-sign').removeClass('icon-minus-sign');
+        } else {
+            children.show('fast');
+            $(this).attr('title', 'Collapse this branch').find(' > i').addClass('icon-minus-sign').removeClass('icon-plus-sign');
+        }
+        e.stopPropagation();
+    });
+   })
+  </script>
+  </body>
+</html>
