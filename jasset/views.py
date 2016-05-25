@@ -177,6 +177,7 @@ def asset_del(request):
     删除主机
     """
     asset_id = request.GET.get('id', '')
+    print "180:asset_id:",asset_id
     if asset_id:
         Asset.objects.filter(id=asset_id).delete()
 
@@ -282,6 +283,7 @@ def asset_list(request):
     company_name = request.GET.get("company_name",'')
     department_name = request.GET.get("department_name",'')
     business_name = request.GET.get("business_name",'')
+    system_type = request.GET.get("system_type",'')
     #新增CI项:End
     idc_id = request.GET.get("idc_id", '')
     asset_id_all = request.GET.getlist("id", '')
@@ -393,7 +395,9 @@ def asset_list(request):
 
     if status:
         asset_find = asset_find.filter(status__contains=status)
-
+    #新增根据操作系统类型过滤服务器列表
+    if system_type:
+        asset_find = asset_find.filter(system_type__contains=system_type)
     if keyword:
         asset_find = asset_find.filter(
             Q(hostname__contains=keyword) |
@@ -425,6 +429,11 @@ def asset_list(request):
         return my_render('jasset/asset_excel_download.html', locals(), request)
     search_num = asset_find.count()
     assets_list, p, assets, page_range, current_page, show_first, show_end = pages(asset_find, request)
+    #新增操作系统列表显示
+    system_type_list = []
+    for asset_list in assets:
+        system_type_list.append(asset_list.system_type)
+    system_type_set = set(system_type_list)
     if user_perm != 0:
         return my_render('jasset/asset_list.html', locals(), request)
     else:
@@ -531,8 +540,16 @@ def asset_detail(request):
             elif perm == 'user_group' or perm == 'rule':
                 user_group_perm = value
     print perm_info
-
     asset_record = AssetRecord.objects.filter(asset=asset).order_by('-alert_time')
+    #获取公司名称和部门名称:2016-05-25
+    #通过资产id查询到对应的业务名称ID,然后通过业务ID查询到对应的部门和公司名称
+    business_id = None;department_name = None;company_name = None
+    for object in asset.business_name.all():
+        business_id = object.id
+    if business_id:
+        asset_object = get_object(AssetRelation, business_name_id=business_id)
+        department_name = asset_object.department_name
+        company_name = asset_object.company_name
 
     return my_render('jasset/asset_detail.html', locals(), request)
 
@@ -770,6 +787,8 @@ def company_edit(request):
         else:
             # company_name.asset_set.clear()
             db_update_company(id=company_id, name=name, comment=comment)
+            #更新关系表中的公司名称
+            db_update_AssetRelation_company(company_name_id=company_id,company_name=name)
             smg = u"公司名称 %s 添加成功" % name
 
         return HttpResponseRedirect(reverse('asset_company_list'))
@@ -806,6 +825,7 @@ def company_del(request):
 
     for company_id in  company_id_list:
         CompanyName.objects.filter(id=company_id).delete()
+        AssetRelation.objects.filter(company_name_id=company_id).delete()
 
     return HttpResponse(u'删除成功')
 
@@ -869,10 +889,6 @@ def department_edit(request):
     department_id = request.GET.get('id', '')
     department_name = get_object(DepartmentName, id=department_id)
 
-    asset_all = Asset.objects.all()
-    asset_select = Asset.objects.filter(department_name=department_name)
-    asset_no_select = [a for a in asset_all if a not in asset_select]
-
     if request.method == 'POST':
         name = request.POST.get('name', '')
         asset_select = request.POST.getlist('asset_select', [])
@@ -893,8 +909,10 @@ def department_edit(request):
             pass
 
         else:
-            department_name.asset_set.clear()
+
             db_update_department(id=department_id, name=name, comment=comment, asset_select=asset_select)
+            #更新关系表中的部门名称
+            db_update_AssetRelation_department(department_name_id=department_id,department_name=name)
             smg = u"公司名称 %s 添加成功" % name
 
         return HttpResponseRedirect(reverse('asset_department_list'))
@@ -910,8 +928,15 @@ def department_list(request):
     """
     header_title, path1, path2 = u'查看部门名称', u'资产管理', u'查看部门名称'
     keyword = request.GET.get('keyword', '')
+    company_id = request.GET.get('company_id', '')
     department_name_list = DepartmentName.objects.all()
     department_id = request.GET.get('id')
+    if company_id:
+        department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id)
+        department_id_list = []
+        for department_list in department:
+            department_id_list.append(department_list.department_name_id)
+        department_name_list = DepartmentName.objects.filter(pk__in=department_id_list)
     if department_id:
         department_name_list = department_name_list.filter(id=department_id)
     if keyword:
@@ -931,6 +956,7 @@ def department_del(request):
 
     for department_id in  department_id_list:
         DepartmentName.objects.filter(id=department_id).delete()
+        AssetRelation.objects.filter(department_name_id=department_id).update(department_name_id=None,department_name=None)
 
     return HttpResponse(u'删除成功')
 
@@ -1036,6 +1062,8 @@ def business_edit(request):
         else:
             business_name.asset_set.clear()
             db_update_business(id=business_id, name=name, comment=comment, asset_select=asset_select)
+            #更新关系表中的业务名称
+            db_update_AssetRelation_business(business_name_id=business_id,business_name=name)
             smg = u"业务名称 %s 添加成功" % name
 
         return HttpResponseRedirect(reverse('asset_business_list'))
@@ -1051,8 +1079,15 @@ def business_list(request):
     """
     header_title, path1, path2 = u'查看业务名称', u'资产管理', u'查看业务名称'
     keyword = request.GET.get('keyword', '')
+    department_id = request.GET.get('department_id', '')
     business_name_list = BusinessName.objects.all()
     business_id = request.GET.get('id')
+    if department_id:
+        business =  AssetRelation.objects.all().filter(department_name_id__exact=department_id)
+        business_id_list = []
+        for business_list in business:
+            business_id_list.append(business_list.business_name_id)
+        business_name_list = BusinessName.objects.filter(pk__in=business_id_list)
     if business_id:
         business_name_list = business_name_list.filter(id=business_id)
     if keyword:
@@ -1072,6 +1107,7 @@ def business_del(request):
 
     for business_id in  business_id_list:
         BusinessName.objects.filter(id=business_id).delete()
+        AssetRelation.objects.filter(business_name_id=business_id).update(business_name_id=None,business_name=None)
 
     return HttpResponse(u'删除成功')
 

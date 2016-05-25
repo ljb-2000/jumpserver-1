@@ -159,29 +159,13 @@
                                         <td>{{ asset.position|default_if_none:"" }}</td>
                                     </tr>
                                     <!-- 新增的CI项:2016-05-06 :start-->
-                                    <tr>
-                                        <td class="text-navy">所属公司</td>
-                                        <td>
-                                             <table class="table">
-                                                 {% for asset_company_name in asset.company_name.all %}
-                                                    <tr>
-                                                        <td>{{ asset_company_name.name|default_if_none:"" }}</td>
-                                                    </tr>
-                                                 {% endfor %}
-                                             </table>
-                                        </td>
+                                   <tr>
+                                        <td class="text-navy">公司名称</td>
+                                        <td>{{ company_name|default_if_none:"" }}</td>
                                     </tr>
-                                     <tr>
-                                        <td class="text-navy">所属部门</td>
-                                        <td>
-                                             <table class="table">
-                                                 {% for asset_department_name in asset.department_name.all %}
-                                                    <tr>
-                                                        <td>{{ asset_department_name.name|default_if_none:"" }}</td>
-                                                    </tr>
-                                                 {% endfor %}
-                                             </table>
-                                        </td>
+                                    <tr>
+                                        <td class="text-navy">部门名称</td>
+                                        <td>{{ department_name|default_if_none:"" }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-navy">业务名称</td>

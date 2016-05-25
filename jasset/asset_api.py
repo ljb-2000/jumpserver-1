@@ -227,6 +227,36 @@ def db_update_company(**kwargs):
 
     CompanyName.objects.filter(id=company_id).update(**kwargs)
 
+def db_update_AssetRelation_company(**kwargs):
+    """
+    update a AssetRelation company_name in database
+    更新关系数据库表中的公司名称
+    """
+    company_id = kwargs.pop('company_name_id')
+    # asset_id_list = kwargs.pop('asset_select')
+    # company = get_object(CompanyName, id=company_id)
+
+    # for asset_id in asset_id_list:
+    #     company_add_asset(company, asset_id)
+
+    AssetRelation.objects.filter(company_name_id=company_id).update(**kwargs)
+
+def db_update_AssetRelation_department(**kwargs):
+    """
+    update a AssetRelation department in database
+    更新关系数据库表中的部门名称
+    """
+    department_id = kwargs.pop('department_name_id')
+    AssetRelation.objects.filter(department_name_id=department_id).update(**kwargs)
+
+def db_update_AssetRelation_business(**kwargs):
+    """
+    update a AssetRelation department in database
+    更新关系数据库表中的部门名称
+    """
+    business_id = kwargs.pop('business_name_id')
+    AssetRelation.objects.filter(business_name_id=business_id).update(**kwargs)
+
 def db_update_department(**kwargs):
     """
     update a asset department_name in database

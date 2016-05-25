@@ -13,7 +13,7 @@ class AssetForm(forms.ModelForm):
             "ip", "other_ip", "hostname", "port", "group", "username", "password", "use_default_auth",
             "idc", "mac", "remote_ip", "brand", "cpu", "memory", "disk", "system_type", "system_version",
             "cabinet", "position", "number", "status", "asset_type", "env", "sn", "is_active", "comment",
-            "system_arch","ci001","ci002","email","company_name","department_name","mobile_phone_number","level","business_name"
+            "system_arch","ci001","ci002","email","mobile_phone_number","level","business_name"
         ]
 
 

@@ -48,6 +48,7 @@ class AssetGroup(models.Model):
 #定义公司名称:新增自定义
 class CompanyName(models.Model):
     name = models.CharField(max_length=80)
+    num = models.IntegerField(blank=True, null=True)
     comment = models.CharField(max_length=160, blank=True, null=True)
 
     def __unicode__(self):
@@ -55,6 +56,7 @@ class CompanyName(models.Model):
 #定义部门名称：新增自定义
 class DepartmentName(models.Model):
     name = models.CharField(max_length=80)
+    num = models.IntegerField(blank=True, null=True)
     comment = models.CharField(max_length=160, blank=True, null=True)
 
     def __unicode__(self):
@@ -125,9 +127,9 @@ class Asset(models.Model):
     #新增邮件地址
     email = models.CharField(max_length=128, blank=True, null=True, verbose_name=u"邮件地址")
     #新增公司名称
-    company_name = models.ManyToManyField(CompanyName, blank=True, verbose_name=u"所属公司")
+    # company_name = models.ManyToManyField(CompanyName, blank=True, verbose_name=u"所属公司")
     #新增部门名称
-    department_name = models.ManyToManyField(DepartmentName, blank=True, verbose_name=u"所属部门")
+    # department_name = models.ManyToManyField(DepartmentName, blank=True, verbose_name=u"所属部门")
     #新增电话号码
     mobile_phone_number = models.CharField(max_length=20,blank=True, null=True, verbose_name=u"移动电话")
     #新增业务故障响应级别
@@ -136,6 +138,7 @@ class Asset(models.Model):
     business_name = models.ManyToManyField(BusinessName, blank=True, verbose_name=u"业务名称")
     def __unicode__(self):
         return self.ip
+
 
 
 class AssetRecord(models.Model):

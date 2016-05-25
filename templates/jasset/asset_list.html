@@ -119,6 +119,19 @@
                                     {% endfor %}
                                 </select>
                             </label>
+
+                            <label>
+                                <select name="system_type" class="form-control m-b input-sm" onchange="change_info()">
+                                    <option value="">操作系统类型</option>
+                                     {% for system_type_list in system_type_set %}
+                                            {% ifequal system_type_list system_type %}
+                                                <option value="{{ system_type_list }}" selected> {{ system_type_list|slice:":20" }} </option>
+                                            {% else %}
+                                                <option value="{{ system_type_list }}"> {{ system_type_list|slice:":20" }} </option>
+                                            {% endifequal %}
+                                    {% endfor %}
+                                </select>
+                            </label>
                         </div>
 
                         <div class="col-sm-4" style="padding-right: 0">

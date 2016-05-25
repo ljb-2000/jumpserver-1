@@ -46,7 +46,7 @@
                                     <input id="checkall" type="checkbox" class="i-checks" name="checkall" value="checkall" data-editable='false' onclick="check_all('contents_form')">
                                 </th>
                                 <th class="text-center"> 公司名称 </th>
-                                <th class="text-center"> 主机数量 </th>
+                                <th class="text-center"> 部门信息链接 </th>
                                 <th class="text-center"> 备注 </th>
                                 <th class="text-center"> 操作 </th>
                             </tr>
@@ -58,7 +58,7 @@
                                     <input name="id" value="{{ asset_company.id }}" type="checkbox" class="i-checks">
                                 </td>
                                 <td class="text-center"><a >{{ asset_company.name }} </a>  </td>
-                               <!-- <td class="text-center"> <a href="{% url 'asset_list' %}?company_id={{ asset_company.id }}"></a> </td>-->
+                                <td class="text-center"> <a href="{% url 'asset_department_list' %}?company_id={{ asset_company.id }}">部门详情</a> </td>
                                 <td class="text-center"> {{ asset_company.comment }} </td>
                                 <td class="text-center">
                                     <a href="{% url 'asset_company_edit' %}?id={{ asset_company.id }}" class="btn btn-xs btn-info">编辑</a>
