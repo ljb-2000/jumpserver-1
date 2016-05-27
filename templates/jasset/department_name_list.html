@@ -46,7 +46,7 @@
                                     <input id="checkall" type="checkbox" class="i-checks" name="checkall" value="checkall" data-editable='false' onclick="check_all('contents_form')">
                                 </th>
                                 <th class="text-center"> 部门名称 </th>
-                                <th class="text-center"> 业务信息链接 </th>
+                                <th class="text-center"> 业务数量 </th>
                                 <th class="text-center"> 备注 </th>
                                 <th class="text-center"> 操作 </th>
                             </tr>
@@ -58,7 +58,7 @@
                                     <input name="id" value="{{ asset_department.id }}" type="checkbox" class="i-checks">
                                 </td>
                                 <td class="text-center"><a>{{ asset_department.name }} </a>  </td>
-                                <td class="text-center"><a href="{% url 'asset_business_list' %}?department_id={{ asset_department.id }}">业务详情</a> </td>
+                                <td class="text-center"><a href="{% url 'asset_business_list' %}?department_id={{ asset_department.id }}">{{ asset_department.num }}</a> </td>
                                 <td class="text-center"> {{ asset_department.comment }} </td>
                                 <td class="text-center">
                                     <a href="{% url 'asset_department_edit' %}?id={{ asset_department.id }}" class="btn btn-xs btn-info">编辑</a>
@@ -94,7 +94,9 @@
                         $(this).attr('value'),
                         {},
                         function (data) {
-                            row.remove();
+                            /*row.remove();*/
+                            console.log(data)
+                            if(data==="0"){alert('请先移除该部门下面的所有业务，然后再删除该部门名称')}else{ row.remove();alert('删除成功')}
                         }
                 )
             }
@@ -110,7 +112,9 @@
                         '{% url "asset_department_del" %}',
                         {id: check_array.join(',')},
                         function(data){
-                            $('tr.gradeX input:checked').closest('tr').remove();
+                            /*$('tr.gradeX input:checked').closest('tr').remove();*/
+                            console.log(data)
+                            if(data==="0"){alert('请先移除该部门下面的所有业务，然后再删除该部门名称')}else{ $('tr.gradeX input:checked').closest('tr').remove();;alert('删除成功')}
                         }
                 )
 

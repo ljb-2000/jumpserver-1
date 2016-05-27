@@ -21,6 +21,9 @@
                         </a>
                     </div>
                 </div>
+                {% if smg %}
+                        <div class="alert alert-success text-center">{{ smg }}</div>
+                {% endif %}
                 <div class="ibox-content">
                     <div class="">
                         <a href="{% url 'asset_business_add' %}" class="btn btn-sm btn-primary "> 添加业务名称 </a>
@@ -94,7 +97,10 @@
                         $(this).attr('value'),
                         {},
                         function (data) {
-                            row.remove();
+                            /*row.remove();*/
+                            console.log(data)
+                            if(data==="0"){alert('请先移除该业务下面的所有服务器，然后再删除该业务名称')}else{ row.remove();alert('删除成功')}
+
                         }
                 )
             }
@@ -110,7 +116,10 @@
                         '{% url "asset_business_del" %}',
                         {id: check_array.join(',')},
                         function(data){
-                            $('tr.gradeX input:checked').closest('tr').remove();
+                            /*$('tr.gradeX input:checked').closest('tr').remove();*/
+                            console.log(data)
+                            if(data==="0"){alert('请先移除该业务下面的所有服务器，然后再删除该业务名称')}else{ $('tr.gradeX input:checked').closest('tr').remove();;alert('删除成功')}
+
                         }
                 )
 

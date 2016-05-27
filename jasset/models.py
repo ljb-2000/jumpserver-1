@@ -48,7 +48,7 @@ class AssetGroup(models.Model):
 #定义公司名称:新增自定义
 class CompanyName(models.Model):
     name = models.CharField(max_length=80)
-    num = models.IntegerField(blank=True, null=True)
+    num = models.IntegerField(default=0)
     comment = models.CharField(max_length=160, blank=True, null=True)
 
     def __unicode__(self):
@@ -56,7 +56,7 @@ class CompanyName(models.Model):
 #定义部门名称：新增自定义
 class DepartmentName(models.Model):
     name = models.CharField(max_length=80)
-    num = models.IntegerField(blank=True, null=True)
+    num = models.IntegerField(default=0)
     comment = models.CharField(max_length=160, blank=True, null=True)
 
     def __unicode__(self):

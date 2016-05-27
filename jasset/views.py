@@ -1,6 +1,6 @@
 # coding:utf-8
 
-from django.db.models import Q
+from django.db.models import Q,F
 from jasset.asset_api import *
 from jumpserver.api import *
 from jumpserver.models import Setting
@@ -8,6 +8,9 @@ from jasset.forms import AssetForm, IdcForm
 from jasset.models import Asset, IDC, AssetGroup, ASSET_TYPE, ASSET_STATUS,AutoUpdataCI_Record,AssetRecord,cmdb_01,AssetRelation,CompanyName,DepartmentName,BusinessName
 from jperm.perm_api import get_group_asset_perm, get_group_user_perm
 import json
+from django.http import HttpResponse
+from django.shortcuts import render
+from django.shortcuts import redirect
 
 @require_role('admin')
 def group_add(request):
@@ -117,7 +120,8 @@ def group_del(request):
     for group_id in group_id_list:
         AssetGroup.objects.filter(id=group_id).delete()
 
-    return HttpResponse(u'删除成功')
+    # return HttpResponse(u'删除成功')
+    return my_render('jasset/jasset_warn.html', locals(), request)
 
 
 @require_role('admin')
@@ -284,10 +288,12 @@ def asset_list(request):
     department_name = request.GET.get("department_name",'')
     business_name = request.GET.get("business_name",'')
     system_type = request.GET.get("system_type",'')
+    env = request.GET.get("env",'')
     #新增CI项:End
     idc_id = request.GET.get("idc_id", '')
     asset_id_all = request.GET.getlist("id", '')
     company_all = CompanyName.objects.all()
+    asset_env = ASSET_ENV
 
     if group_id:
         group = get_object(AssetGroup, id=group_id)
@@ -398,6 +404,8 @@ def asset_list(request):
     #新增根据操作系统类型过滤服务器列表
     if system_type:
         asset_find = asset_find.filter(system_type__contains=system_type)
+    if env:
+        asset_find = asset_find.filter(env__contains=env)
     if keyword:
         asset_find = asset_find.filter(
             Q(hostname__contains=keyword) |
@@ -824,10 +832,15 @@ def company_del(request):
     company_id_list = company_ids.split(',')
 
     for company_id in  company_id_list:
-        CompanyName.objects.filter(id=company_id).delete()
-        AssetRelation.objects.filter(company_name_id=company_id).delete()
-
-    return HttpResponse(u'删除成功')
+        #如果公司下面有部门，则先删除部门，然后再进行公司删除
+        department_num = CompanyName.objects.get(pk__exact=company_id).num
+        if department_num:
+                smg = 0
+                return HttpResponse(smg)
+        else:
+            CompanyName.objects.filter(id=company_id).delete()
+            smg = 1
+    return HttpResponse(smg)
 
 #增加部门名称维护页面操作:start
 @require_role('admin')
@@ -871,6 +884,8 @@ def department_add(request):
 
         else:
             db_add_department_name(name=name, comment=comment)
+            #新增功能：更新该部门对应的公司，记录公司下面有多少个部门,company_name表的num字段加1
+            CompanyName.objects.filter(pk__exact=company_id).update(num=F('num')+1)
             #新增功能：记录部门名称到关系表中:2016-05-20
             department_name,department_name_id = get_new_company_name_id(name=name,table=DepartmentName)
             db_add_department_name_to_AssetRelation(department_name=department_name,department_name_id=department_name_id,company_id=company_id)
@@ -955,10 +970,22 @@ def department_del(request):
     department_id_list = department_ids.split(',')
 
     for department_id in  department_id_list:
-        DepartmentName.objects.filter(id=department_id).delete()
-        AssetRelation.objects.filter(department_name_id=department_id).update(department_name_id=None,department_name=None)
-
-    return HttpResponse(u'删除成功')
+        #如果部门下面有业务，则先删除业务，然后再进行部门删除
+        business_num = DepartmentName.objects.get(pk__exact=department_id).num
+        if business_num:
+            smg_flag = 0
+            return HttpResponse(smg_flag)
+        else:
+            DepartmentName.objects.filter(id=department_id).delete()
+            #部门名称删除，在公司表中更新num字段，代表这个公司下面少了一个部门
+            object_company = AssetRelation.objects.filter(department_name_id__exact=department_id)[0:1].get()
+            company_id = object_company.company_name_id
+            CompanyName.objects.filter(pk__exact=company_id).update(num=F('num')-1)
+            #删除关系表中的关系记录
+            # AssetRelation.objects.filter(department_name_id=department_id).update(department_name_id=None,department_name=None)
+            AssetRelation.objects.filter(department_name_id=department_id).delete()
+            smg_flag = 1
+    return HttpResponse(smg_flag)
 
 #增加业务名称维护页面操作:start
 @require_role('admin')
@@ -973,8 +1000,9 @@ def business_add(request):
     #通过选择公司事件，过滤出对应的部门名称来
     company_id = request.GET.get('company_id', '')
     department_select = None
+    smg = u'业务名称不能为空'
     if company_id:
-        department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id)
+        department = AssetRelation.objects.all().filter(company_name_id__exact=company_id)
         company_name = get_object(CompanyName, id=company_id)
         company_id = int(company_id)
         #根据公司id,获取部门ID
@@ -1019,11 +1047,14 @@ def business_add(request):
         else:
             #先保存业务名称，然后获取业务名称的名字和ID，把这两个信息先保存到关系表，然后再将业务ID与资产ID进行关联
             db_add_business_name(name=name, comment=comment, asset_select=asset_select)
+            #业务名称删除，在部门表中更新num字段，代表这个部门下面增加一个业务
+            DepartmentName.objects.filter(pk__exact=department_id).update(num=F('num')+1)
             business_name,business_name_id = get_new_company_name_id(name=name,table=BusinessName)
             db_add_business_name_to_AssetRelation(business_name=business_name,business_name_id=business_name_id,company_id=company_id,department_id=department_id)
             smg = u"业务名称 %s 添加成功" % name
 
     return my_render('jasset/business_name_add.html', locals(), request)
+
 
 
 @require_role('admin')
@@ -1071,6 +1102,7 @@ def business_edit(request):
     return my_render('jasset/business_name_edit.html', locals(), request)
 
 
+
 @require_role('admin')
 def business_list(request):
     """
@@ -1104,12 +1136,29 @@ def business_del(request):
     """
     business_ids = request.GET.get('id', '')
     business_id_list = business_ids.split(',')
-
     for business_id in  business_id_list:
-        BusinessName.objects.filter(id=business_id).delete()
-        AssetRelation.objects.filter(business_name_id=business_id).update(business_name_id=None,business_name=None)
+        #如果业务下面有关联服务器，则先将服务器从该业务部门移出，然后再进行名称删除
+        asset_list = BusinessName.objects.get(id=business_id).asset_set.all()
+        # print "jasset.views.py:asset_list:1138:",asset_list
 
-    return HttpResponse(u'删除成功')
+        if asset_list:
+                smg_flag = 0
+                # print "jasset.views.py:asset_list:1142:",asset_list
+                print u'删除失败'
+                # data = json.dumps({"id":"0", "name": "公司1", "parent_id": "0", "depth": "1"})
+                return HttpResponse(smg_flag)
+        else:
+            BusinessName.objects.filter(id=business_id).delete()
+            #业务名称删除，在部门表中更新num字段，代表这个部门下面少了一个业务
+            object_department = AssetRelation.objects.filter(business_name_id__exact=business_id)[0:1].get()
+            department_id = object_department.department_name_id
+            DepartmentName.objects.filter(pk__exact=department_id).update(num=F('num')-1)
+            #删除关系表的关系
+            AssetRelation.objects.filter(business_name_id=business_id).update(business_name_id=None,business_name=None)
+            smg_flag = 1
+    return HttpResponse(smg_flag)
+
+
 
 def AssetRelationGenerationNet():
     """
