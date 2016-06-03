@@ -3,7 +3,7 @@
 from Crypto.PublicKey import RSA
 from subprocess import call
 
-from juser.models import AdminGroup
+from juser.models import AdminGroup,CMDB_Group
 from jumpserver.api import *
 from jumpserver.settings import BASE_DIR, EMAIL_HOST_USER as MAIL_FROM
 
@@ -20,6 +20,21 @@ def group_add_user(group, user_id=None, username=None):
 
     if user:
         group.user_set.add(user)
+
+def db_add_cmdb_group(**kwargs):
+    """
+    add a cmdb group in database
+    数据库中添加资产用户组
+    """
+    name = kwargs.get('name')
+    group = get_object(CMDB_Group, name=name)
+    users = kwargs.pop('users_id')
+
+    if not group:
+        group = CMDB_Group(**kwargs)
+        group.save()
+        for user_id in users:
+            group_add_user(group, user_id)
 
 
 def db_add_group(**kwargs):
@@ -100,9 +115,9 @@ def db_update_user(**kwargs):
     group_select = []
     if groups_post:
         for group_id in groups_post:
-            group = UserGroup.objects.filter(id=group_id)
+            group = CMDB_Group.objects.filter(id=group_id)
             group_select.extend(group)
-    user_get.group = group_select
+    user_get.group_asset = group_select
 
     if admin_groups_post != '':
         user_get.admingroup_set.all().delete()
@@ -208,4 +223,34 @@ def get_display_msg(user, password, ssh_key_pwd, ssh_key_login_need, send_mail_n
         """ % (URL, user.username, password)
 
     return msg
+
+def cmdb_group_check(company_name_id,user_id):
+    """
+    :param company_id:
+    :param user_id:
+    :return: 返回用户的组类型，role_type_list=[1,2,3],值类型为列表
+    """
+    role_type_list = []
+    for type in ['CM','DM','BM']:
+        group_lists = CMDB_Group.objects.filter(company_name_id__exact=company_name_id).filter(group_type__exact=type)
+        #获取组ID
+        group_id_lists = []
+        for group_list in group_lists:
+            group_id_lists.append(group_list.id)
+        user_id_lists = []
+        for group_id in group_id_lists:
+            user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+            for list in user_name_obj:
+                user_id_lists.append(list.id)
+        if type == 'CM':
+            if user_id in user_id_lists:
+                role_type_list.append(1)
+        if type == 'DM':
+            if user_id in user_id_lists:
+                role_type_list.append(2)
+        if type == 'BM':
+            if user_id in user_id_lists:
+                role_type_list.append(3)
+    return role_type_list
+
 

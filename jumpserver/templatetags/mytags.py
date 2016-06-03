@@ -8,6 +8,8 @@ from django import template
 from jperm.models import PermPush
 from jumpserver.api import *
 from jperm.perm_api import get_group_user_perm
+#增加CMDB用户组下面用户数量显示
+from juser.models import CMDB_Group
 
 register = template.Library()
 
@@ -85,6 +87,14 @@ def members_count(group_id):
     else:
         return 0
 
+@register.filter(name='members_count_cmdb')
+def members_count_cmdb(group_id):
+    """统计CMDB用户组下成员数量"""
+    group = get_object(CMDB_Group, id=group_id)
+    if group:
+        return group.user_set.count()
+    else:
+        return 0
 
 @register.filter(name='to_name')
 def to_name(user_id):

@@ -5,12 +5,12 @@ from jasset.asset_api import *
 from jumpserver.api import *
 from jumpserver.models import Setting
 from jasset.forms import AssetForm, IdcForm
-from jasset.models import Asset, IDC, AssetGroup, ASSET_TYPE, ASSET_STATUS,AutoUpdataCI_Record,AssetRecord,cmdb_01,AssetRelation,CompanyName,DepartmentName,BusinessName
+from jasset.models import Asset, IDC, AssetGroup, ASSET_TYPE, ASSET_STATUS,AutoUpdataCI_Record,AssetRecord,cmdb_01,AssetRelation,CompanyName,DepartmentName,BusinessName,CMDB_PermRule
 from jperm.perm_api import get_group_asset_perm, get_group_user_perm
 import json
 from django.http import HttpResponse
-from django.shortcuts import render
-from django.shortcuts import redirect
+#导入juser应用的用户表,控制CMDB主机访问
+from juser.models import User
 
 @require_role('admin')
 def group_add(request):
@@ -453,7 +453,7 @@ def asset_edit_batch(request):
     af = AssetForm()
     name = request.user.username
     asset_group_all = AssetGroup.objects.all()
-
+    asset_business_all = BusinessName.objects.all()
     if request.method == 'POST':
         env = request.POST.get('env', '')
         idc_id = request.POST.get('idc', '')
@@ -466,6 +466,8 @@ def asset_edit_batch(request):
         comment = request.POST.get('comment', '')
         asset_id_all = unicode(request.GET.get('asset_id_all', ''))
         asset_id_all = asset_id_all.split(',')
+        #新增批量修改业务名称功能:2016-05-27
+        business = request.POST.getlist('business', [])
         for asset_id in asset_id_all:
             alert_list = []
             asset = get_object(Asset, id=asset_id)
@@ -511,6 +513,21 @@ def asset_edit_batch(request):
                             group_old_name.append(g.name)
                         asset.group = group_instance
                         alert_list.append([u'主机组', ','.join(group_old_name), ','.join(group_new_name)])
+                #新增批量修改业务名称功能:2016-05-27
+                if business:
+                    business_new, business_old, business_new_name, business_old_name = [], asset.business_name.all(), [], []
+                    for business_id in business:
+                        business_obj = get_object(BusinessName, id=business_id)
+                        if business_obj:
+                            business_new.append(business_obj)
+                    if not set(business_new) < set(business_old):
+                        business_instance = list(set(business_new) | set(business_old))
+                        for b in business_instance:
+                            business_new_name.append(b.name)
+                        for b in business_old:
+                            business_old_name.append(b.name)
+                        asset.business_name = business_instance
+                        alert_list.append([u'业务名称', ','.join(business_old_name), ','.join(business_new_name)])
                 if cabinet:
                     if asset.cabinet != cabinet:
                         asset.cabinet = cabinet
@@ -730,7 +747,6 @@ def company_add(request):
     """
     header_title, path1, path2 = u'添加公司名称', u'公司名称管理', u'添加公司名称'
     asset_all = Asset.objects.all()
-
     if request.method == 'POST':
         name = request.POST.get('name', '')
         # asset_select = request.POST.getlist('asset_select', [])
@@ -852,6 +868,14 @@ def department_add(request):
     header_title, path1, path2 = u'添加部门名称', u'部门名称管理', u'添加部门名称'
     asset_all = Asset.objects.all()
     company_all = CompanyName.objects.all()
+    #获取用户的id,通过用户ID获取用户所属公司
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    #获取CMDB规则表中权限类型ID为1,公司名称为公司1的规则行
+    if username != 'admin':
+       company_all = company_all.filter(name=company_name)
+    #过滤公司名称，只显示本公司的部门信息
 
     if request.method == 'POST':
         name = request.POST.get('name', '')
@@ -946,6 +970,19 @@ def department_list(request):
     company_id = request.GET.get('company_id', '')
     department_name_list = DepartmentName.objects.all()
     department_id = request.GET.get('id')
+    perm_rule_all = CMDB_PermRule.objects.all()
+    #获取用户的id,通过用户ID获取用户所属公司
+    username = request.user.name
+    user_id = request.user.id
+    #获取CMDB规则表中权限类型ID为1,公司名称为公司1的规则行
+    company_name = request.user.company_name
+    perm_rule_find = perm_rule_all.filter(role_type_id=1).filter(company_name=company_name)
+    user_name_list = []
+    group_name_list = []
+    for perm_rule in perm_rule_find:
+        user_name_list.append(perm_rule.user_name)
+        group_name_list.append(perm_rule.group_name)
+
     if company_id:
         department =  AssetRelation.objects.all().filter(company_name_id__exact=company_id)
         department_id_list = []
@@ -1145,7 +1182,7 @@ def business_del(request):
                 smg_flag = 0
                 # print "jasset.views.py:asset_list:1142:",asset_list
                 print u'删除失败'
-                # data = json.dumps({"id":"0", "name": "公司1", "parent_id": "0", "depth": "1"})
+                #data = json.dumps({"id":"0", "name": "公司1", "parent_id": "0", "depth": "1"})
                 return HttpResponse(smg_flag)
         else:
             BusinessName.objects.filter(id=business_id).delete()

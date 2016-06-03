@@ -162,7 +162,7 @@
                             </div>
 
                              <div>
-                                <a  style="padding-left: 4cm">搜索数量/总数<span class="label label-info pull-right">{{ search_num }}/{{ host_total_num}}</span></a>
+                                <a  style="padding-left: 10cm">搜索数量/总数<span class="label label-info pull-right">{{ search_num }}/{{ host_total_num}}</span></a>
                              </div>
                         </div>
                         <div id="export"></div>
@@ -174,6 +174,7 @@
                                     </th>
                                     <th class="text-center"> 主机名 </th>
                                     <th class="text-center" name="ip"> IP地址 </th>
+                                    <th class="text-center"> 负责人</th>
                                     <th class="text-center"> IDC </th>
                                     <th class="text-center"> 所属主机组 </th>
 {#                                    <th class="text-center"> 配置信息 </th>#}
@@ -192,6 +193,7 @@
                                     </td>
                                     <td class="text-center hostname"> <a href="{% url 'asset_detail' %}?id={{ asset.id }}">{{ asset.hostname|default_if_none:"" }}</a></td>
                                     <td class="text-center"> {{ asset.ip|default_if_none:"" }} </td>
+                                    <td class="text-center"> {{ asset.principal|default_if_none:"" }} </td>
                                     <td class="text-center"> {{ asset.idc.name|default_if_none:"" }} </td>
                                     <td class="text-center">{{ asset.group.all|group_str2 }}</td>
 {#                                    <td class="text-center">{{ asset.cpu }}|{{ asset.memory }}|{{ asset.disk }}</td>#}

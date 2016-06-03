@@ -98,7 +98,9 @@
                         {},
                         function (data) {
                             /*row.remove();*/
-                            console.log(data)
+                            /*console.log(typeof data)
+                            var data =  JSON.parse(data);
+                            console.log(data.id)*/
                             if(data==="0"){alert('请先移除该业务下面的所有服务器，然后再删除该业务名称')}else{ row.remove();alert('删除成功')}
 
                         }

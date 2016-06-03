@@ -104,7 +104,30 @@
                             </div>
                         </div>
                     </div>
+                    <!--新增功能:2016-05-27:批量修改业务名称-->
+                    <div class="form-group">
+                        <label for="businesses" class="col-sm-2 control-label">所属业务名称</label>
 
+                        <div class="col-sm-3">
+                            <select id="businesses" size="10" class="form-control m-b" multiple>
+                            {% for asset_business in asset_business_all %}
+                                    <option value="{{ asset_business.id }}">{{ asset_business.name }}</option>
+                            {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-sm-1">
+                            <div class="btn-group" style="margin-top: 50px;">
+                                <button type="button" class="btn btn-white" onclick="move_right('businesses', 'business_selected')"><i class="fa fa-chevron-right"></i></button>
+                                <button type="button" class="btn btn-white" onclick="move_left('business_selected', 'businesses')"><i class="fa fa-chevron-left"></i> </button>
+                            </div>
+                        </div>
+                        <div class="col-sm-3">
+                            <div>
+                                <select id="business_selected" name="business" class="form-control m-b" size="10"  multiple>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
                     <div class="hr-line-dashed"></div>
                     {{ af.cabinet|bootstrap_horizontal }}
 

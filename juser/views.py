@@ -10,6 +10,9 @@ from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from juser.user_api import *
 from jperm.perm_api import get_group_user_perm
+from jasset.models import  CompanyName,DepartmentName,BusinessName,AssetRelation,CMDB_PermRule
+from jumpserver.api import get_object
+
 
 MAIL_FROM = EMAIL_HOST_USER
 
@@ -17,28 +20,104 @@ MAIL_FROM = EMAIL_HOST_USER
 @require_role(role='super')
 def group_add(request):
     """
-    group add view for route
-    添加用户组的视图
+    cmdb group add view for route
+    添加CMDB用户组的视图
     """
     error = ''
     msg = ''
     header_title, path1, path2 = '添加用户组', '用户管理', '添加用户组'
     user_all = User.objects.all()
+    #新增CMDB用户组添加:2016-06-02
+    company_all = CompanyName.objects.all()
+    department_all = DepartmentName.objects.all()
+    business_all = BusinessName.objects.all()
+    #获取对应的用户名,通过用户名获取对应的公司名称
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id = request.user.company_name_id
+    #获取该公司下面对应的部门
+    if username == 'admin':
+        company_id = request.GET.get("company_id", '')
+    if company_id:
+        department = AssetRelation.objects.all().filter(company_name_id__exact=company_id)
+        #根据公司id,获取部门ID
+        department_id_list = []
+        for department_list in department:
+            department_id_list.append(department_list.department_name_id)
+        #部门ID去重，根据部门ID查询对应的部门信息
+        department_select = DepartmentName.objects.filter(pk__in=department_id_list)
+        #根据部门，显示该部门的业务信息列表
+    #从前端通过用户的部门选择事件，获取该部门的ID,通过部门ID，获取对应的业务ID列表
+    department_id = request.GET.get("department_id", '')
+    business_id = request.GET.get("business_id")
+    group_type_tag = request.GET.get("group_type")
+    #公司管理员权限控制,获取只能添加部门管理员，业务管理员类型的组
+    #通过查询jasset_cmdb_permrule表，查询这3种管理员类型，查询该用户属于的公司，
+    #根据公司ID，再通过查询perlrule表，过滤权限类型ID为1,2,3类型的ID，过滤关键字1为公司ID，过滤关键字2为权限类型ID
+    #通过用户ID，查询用户属于公司级别的用户组，还是部门级别的用户组，还是业务级别的组
+    #过滤条件1：公司ID，过滤对象:cmdb_group,获取该用户属于那些类型的组,是公司组或部门组或业务组
+    role_type_list = cmdb_group_check(company_name_id=company_id,user_id=user_id)
+    print "juser.views.py:role_type_list:61:",role_type_list
+    user_name_list = []
+    group_id_list = []
+    acl_check = CMDB_PermRule.objects.filter(company_name_id__exact=company_id).filter(role_type_id__in=role_type_list)
+    #通过以上条件过滤的行，在获取用名字段和用户组字段，再通过用户组字段获取这些用户组对应的用户名列表
+    for acl_list in acl_check:
+        user_name_list.append(acl_list.user_name)
+        group_id_list.append(acl_list.group_id)
+    print "juser.views.py:group_id_list:68:",group_id_list
+    #去掉用户组的ID列中元素值为空的元素
+    func1 = lambda x,y:x if y == '' else x + [y]
+    group_id_list = reduce(func1, [[], ] + group_id_list)
+    print "juser.views.py:group_id_list:71:",group_id_list
+    for group_id in group_id_list:
+        user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+        for list in user_name_obj:
+            user_name_list.append(list.name)
+    #去掉重复的用户名
+    func = lambda x,y:x if y in x else x + [y]
+    user_name_list = reduce(func, [[], ] + user_name_list)
+    print "juser.views.py:user_name_list:79:",user_name_list
+    #如果这个用户在公司管理员组授权的组中，则只group_types只赋值为CM
+    if username in user_name_list:
+        group_types = {'DM': u"部门级别组"}
+    if username == 'admin':
+        group_types = {'CM': u"公司级别组",'DM': u"部门级别组", 'BM': u"业务级别组"}
+    if department_id:
+        business =  AssetRelation.objects.all().filter(department_name_id__exact=department_id)
+        businesst_id_list = []
+        for business_list in business:
+            businesst_id_list.append(business_list.business_name_id)
+        business_select = BusinessName.objects.filter(pk__in=businesst_id_list)
 
     if request.method == 'POST':
         group_name = request.POST.get('group_name', '')
         users_selected = request.POST.getlist('users_selected', '')
         comment = request.POST.get('comment', '')
+        #新增资产类型组,
+        group_type = request.POST.get('group_type', 'CM')
+        #新增公司ID，部门ID，业务ID信息
+        company_name_id  = request.POST.get('company_id', '')
+        department_name_id = request.POST.get('department_id', '')
+        business_name_id = request.POST.get('business_id', '')
+        company_name = CompanyName.objects.get(id=int(company_name_id)).name
+        department_name = ''
+        business_name = ''
+        if group_type == 'DM' or group_type == 'BM':
+            department_name = DepartmentName.objects.get(id=int(department_name_id)).name
+        if group_type == 'BM':
+            business_name = BusinessName.objects.get(id=int(business_name_id)).name
 
         try:
             if not group_name:
-                error = u'组名 不能为空'
+                error = u'组名不能为空'
                 raise ServerError(error)
 
-            if UserGroup.objects.filter(name=group_name):
-                error = u'组名已存在'
-                raise ServerError(error)
-            db_add_group(name=group_name, users_id=users_selected, comment=comment)
+            # if UserGroup.objects.filter(name=group_name):
+            #     error = u'组名已存在'
+            #     raise ServerError(error)
+            db_add_cmdb_group(name=group_name, users_id=users_selected, comment=comment,group_type=group_type,company_name_id=company_name_id,company_name=company_name,department_name_id=department_name_id,department_name=department_name,business_name_id=business_name_id,business_name=business_name)
         except ServerError:
             pass
         except TypeError:
@@ -46,7 +125,7 @@ def group_add(request):
         else:
             msg = u'添加组 %s 成功' % group_name
 
-    return my_render('juser/group_add_xiaoniu.html', locals(), request)
+    return my_render('juser/group_add.html', locals(), request)
 
 
 @require_role(role='super')
@@ -57,9 +136,37 @@ def group_list(request):
     """
     header_title, path1, path2 = '查看用户组', '用户管理', '查看用户组'
     keyword = request.GET.get('search', '')
-    user_group_list = UserGroup.objects.all().order_by('name')
+    user_group_list = CMDB_Group.objects.all().order_by('name')
     group_id = request.GET.get('id', '')
-
+    #获取用户的id,通过用户ID获取用户所属公司
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id = request.user.company_name_id
+    #根据用户ID，查询用户是否在公司管理员组，部门管理员组，业务管理员组，若在这3种类型的组中，则显示组的添加，删除，编辑按钮
+    #根据公司ID，再通过查询perlrule表，过滤权限类型ID为1,2,3类型的ID，过滤关键字1为公司ID，过滤关键字2为权限类型ID
+    role_type_list = [1,2,3]
+    user_name_list = []
+    group_id_list = []
+    acl_check = CMDB_PermRule.objects.filter(company_name_id__exact=company_id).filter(role_type_id__in=role_type_list)
+    #通过以上条件过滤的行，在获取用名字段和用户组字段，再通过用户组字段获取这些用户组对应的用户名列表
+    for acl_list in acl_check:
+        user_name_list.append(acl_list.user_name)
+        group_id_list.append(acl_list.group_id)
+    print "juser.views.py:group_id_list:128:",group_id_list
+    #去掉用户组的ID列中元素值为空的元素
+    func1 = lambda x,y:x if y == '' else x + [y]
+    group_id_list = reduce(func1, [[], ] + group_id_list)
+    print "juser.views.py:group_id_list:131:",group_id_list
+    for group_id in group_id_list:
+        user_name_obj = get_object(CMDB_Group, id=int(group_id)).user_set.all()
+        for list in user_name_obj:
+            user_name_list.append(list.name)
+    #去掉重复的用户名
+    func = lambda x,y:x if y in x else x + [y]
+    user_name_list = reduce(func, [[], ] + user_name_list)
+    print "juser.views.py:user_name_list:136:",user_name_list
+    #查询该用户是否在以上用户列表中
     if keyword:
         user_group_list = user_group_list.filter(Q(name__icontains=keyword) | Q(comment__icontains=keyword))
 
@@ -67,7 +174,7 @@ def group_list(request):
         user_group_list = user_group_list.filter(id=int(group_id))
 
     user_group_list, p, user_groups, page_range, current_page, show_first, show_end = pages(user_group_list, request)
-    return my_render('juser/group_list_xiaoniu.html', locals(), request)
+    return my_render('juser/group_list.html', locals(), request)
 
 
 @require_role(role='super')
@@ -79,7 +186,7 @@ def group_del(request):
     group_ids = request.GET.get('id', '')
     group_id_list = group_ids.split(',')
     for group_id in group_id_list:
-        UserGroup.objects.filter(id=group_id).delete()
+        CMDB_Group.objects.filter(id=group_id).delete()
 
     return HttpResponse('删除成功')
 
@@ -92,10 +199,10 @@ def group_edit(request):
 
     if request.method == 'GET':
         group_id = request.GET.get('id', '')
-        user_group = get_object(UserGroup, id=group_id)
+        user_group = get_object(CMDB_Group, id=group_id)
         # user_group = UserGroup.objects.get(id=group_id)
-        users_selected = User.objects.filter(group=user_group)
-        users_remain = User.objects.filter(~Q(group=user_group))
+        users_selected = User.objects.filter(group_asset=user_group)
+        users_remain = User.objects.filter(~Q(group_asset=user_group))
         users_all = User.objects.all()
 
     elif request.method == 'POST':
@@ -108,14 +215,14 @@ def group_edit(request):
             if '' in [group_id, group_name]:
                 raise ServerError('组名不能为空')
 
-            if len(UserGroup.objects.filter(name=group_name)) > 1:
+            if len(CMDB_Group.objects.filter(name=group_name)) > 1:
                 raise ServerError(u'%s 用户组已存在' % group_name)
             # add user group
-            user_group = get_object_or_404(UserGroup, id=group_id)
+            user_group = get_object_or_404(CMDB_Group, id=group_id)
             user_group.user_set.clear()
 
             for user in User.objects.filter(id__in=users_selected):
-                user.group.add(UserGroup.objects.get(id=group_id))
+                user.group_asset.add(CMDB_Group.objects.get(id=group_id))
 
             user_group.name = group_name
             user_group.comment = comment
@@ -130,7 +237,7 @@ def group_edit(request):
             users_selected = User.objects.filter(group=user_group)
             users_remain = User.objects.filter(~Q(group=user_group))
 
-    return my_render('juser/group_edit_xiaoniu.html', locals(), request)
+    return my_render('juser/group_edit.html', locals(), request)
 
 
 @require_role(role='super')
@@ -138,9 +245,9 @@ def user_add(request):
     error = ''
     msg = ''
     header_title, path1, path2 = '添加用户', '用户管理', '添加用户'
-    user_role = {'SU': u'超级管理员', 'CU': u'普通用户'}
+    user_role = {'SU': u'超级管理员', 'CU': u'普通用户', 'GA': u'组管理员'}
     group_all = UserGroup.objects.all()
-
+    company_all = CompanyName.objects.all()
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = PyCrypt.gen_rand_pass(16)
@@ -155,6 +262,10 @@ def user_add(request):
         is_active = False if '0' in extra else True
         ssh_key_login_need = True
         send_mail_need = True if '2' in extra else False
+        #新增公司名称属性:
+        company_id = request.POST.get('company_id', '')
+        company_name = get_object(CompanyName,id=company_id)
+
 
         try:
             if '' in [username, password, ssh_key_pwd, name, role]:
@@ -175,7 +286,7 @@ def user_add(request):
                                    groups=groups, admin_groups=admin_groups,
                                    ssh_key_pwd=ssh_key_pwd,
                                    is_active=is_active,
-                                   date_joined=datetime.datetime.now())
+                                   date_joined=datetime.datetime.now(),company_name=company_name,company_name_id=company_id)
                 server_add_user(username, password, ssh_key_pwd, ssh_key_login_need)
                 user = get_object(User, username=username)
                 if groups:
@@ -206,7 +317,7 @@ def user_list(request):
     users_list = User.objects.all().order_by('username')
 
     if gid:
-        user_group = UserGroup.objects.filter(id=gid)
+        user_group = CMDB_Group.objects.filter(id=gid)
         if user_group:
             user_group = user_group[0]
             users_list = user_group.user_set.all()
@@ -344,11 +455,13 @@ def user_edit(request):
         if not user_id:
             return HttpResponseRedirect(reverse('index'))
 
-        user_role = {'SU': u'超级管理员', 'CU': u'普通用户'}
+        user_role = {'SU': u'超级管理员', 'CU': u'普通用户', 'GA': u'组管理员'}
         user = get_object(User, id=user_id)
-        group_all = UserGroup.objects.all()
+        group_all = CMDB_Group.objects.all()
+        company_name = user.company_name
+        company_all = CompanyName.objects.all()
         if user:
-            groups_str = ' '.join([str(group.id) for group in user.group.all()])
+            groups_str = ' '.join([str(group.id) for group in user.group_asset.all()])
             admin_groups_str = ' '.join([str(admin_group.group.id) for admin_group in user.admingroup_set.all()])
 
     else:

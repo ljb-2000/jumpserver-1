@@ -124,6 +124,8 @@ class Asset(models.Model):
     ci001 = models.IntegerField(choices=ASSET_SALT_STATUS, blank=True, null=True, verbose_name=u"是否安装salt")
     # ci002字段为0,表示该主机没有部署ssh-key文件；为1表示已部署ssh-key的文件
     ci002 = models.IntegerField(choices=ASSET_SSHKEY_STATUS, blank=True, null=True, verbose_name=u"是否部署ssh-key")
+    #新增负责人
+    principal = models.CharField(max_length=128, blank=True, null=True, verbose_name=u"负责人")
     #新增邮件地址
     email = models.CharField(max_length=128, blank=True, null=True, verbose_name=u"邮件地址")
     #新增公司名称
@@ -213,3 +215,25 @@ class AssetRelationNet(models.Model):
     name = models.CharField(max_length=450, blank=True, null=True, verbose_name=u'树节点名称')
     parent_id = models.CharField(max_length=2, blank=True, null=True, verbose_name=u'父节点序号')
     depth = models.CharField(max_length=2, blank=True, null=True, verbose_name=u'节点的层级')
+
+
+#新增CMDB主机分类显示控制ACL表
+class CMDB_PermRule(models.Model):
+    rule_name = models.CharField(max_length=100, unique=True)
+    user_uuid = models.CharField(max_length=100, blank=True, null=True)
+    user_name = models.CharField(max_length=80, blank=True, null=True)
+    group_id = models.CharField(max_length=10, blank=True, null=True)
+    group_name = models.CharField(max_length=80, blank=True, null=True)
+    company_name_id = models.CharField(max_length=10, blank=True, null=True)
+    company_name = models.CharField(max_length=80,  blank=True,null=True)
+    department_name_id = models.CharField(max_length=10, blank=True, null=True)
+    department_name = models.CharField(max_length=80, blank=True,null=True)
+    business_name_id = models.CharField(max_length=10, blank=True, null=True)
+    business_name = models.CharField(max_length=80, blank=True,null=True)
+    role_type_id = models.CharField(max_length=10, blank=True, null=True)
+    role_type_name = models.CharField(max_length=80, blank=True,null=True)
+    comment = models.CharField(max_length=100, blank=True,null=True)
+    date_added = models.DateTimeField(auto_now=True)
+
+    def __unicode__(self):
+        return self.name

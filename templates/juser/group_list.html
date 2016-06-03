@@ -25,8 +25,10 @@
 
                 <div class="ibox-content">
                     <div class="">
+                    {% if username in user_name_list or username == 'admin' %}
                     <a href="{% url 'user_group_add' %}" class="btn btn-sm btn-primary "> 添加用户组 </a>
                     <a id="del_btn" class="btn btn-sm btn-danger "> 删除所选 </a>
+                    {% endif %}
                     <form id="search_form" method="get" action="" class="pull-right mail-search">
                         <div class="input-group">
                             <input type="text" class="form-control input-sm" id="search_input" name="search" placeholder="Search">
@@ -46,6 +48,7 @@
                                     <input type="checkbox" id="select_all" name="select_all">
                                 </th>
                                 <th class="text-center">组名</th>
+                                <th class="text-center">组类型</th>
                                 <th class="text-center">成员数目</th>
                                 <th class="text-center">备注</th>
                                 <th class="text-center">操作</th>
@@ -58,13 +61,16 @@
                                     <input class="shiftCheckbox" type="checkbox"  name="selected" value="{{ group.id }}">
                                 </td>
                                 <td class="text-center"> {{ group.name }} </td>
+                                <td class="text-center"> {{ group.group_type }} </td>
                                 <td class="text-center">
-                                    <a href="{% url 'user_list' %}?gid={{ group.id }}"> {{ group.id | members_count }}</a>
+                                    <a href="{% url 'user_list' %}?gid={{ group.id }}"> {{ group.id | members_count_cmdb }}</a>
                                 </td>
                                 <td class="text-center"> {{ group.comment }} </td>
                                 <td class="text-center">
+                                    {% if username in user_name_list or username == 'admin' %}
                                     <a href="{% url 'user_group_edit' %}?id={{ group.id }}" class="btn btn-xs btn-info">编辑</a>
                                     <a value="{% url 'user_group_del' %}?id={{ group.id }}" class="btn btn-xs btn-danger del">删除</a>
+                                    {% endif %}
                                 </td>
                             </tr>
                         {% endfor %}

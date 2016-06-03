@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-
+{% load mytags %}
 {% block content %}
     {% include 'nav_cat_bar.html' %}
     <div class="wrapper wrapper-content animated fadeInRight">
@@ -29,13 +29,99 @@
                             {% if msg %}
                                 <div class="alert alert-success text-center">{{ msg }}</div>
                             {% endif %}
+
+                            <div class="hr-line-dashed"></div>
+                            <!--新增资产组：添加组的类型:2016-06-01-->
+                            <div class="form-group">
+                               <label class="col-sm-2 control-label">选择组类型<span class="red-fonts">*</span> </label>
+                                <div class="col-sm-8">
+                                    <label>
+                                        <select name="group_type" class="form-control m-b input-sm" onchange="change_info()">
+                                            <option value="">组类型</option>
+                                            {% for gt, gt_name in group_types.items %}
+                                                {% ifequal gt  group_type_tag %}
+                                                    <option value="{{ gt }}" selected> {{ gt_name|slice:":20" }} </option>
+                                                {% else %}
+                                                    <option value="{{ gt }}" > {{ gt_name|slice:":20" }} </option>
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            <!--新增在添加组时选择指定的公司:2016-06-02-->
+                            {% if group_type_tag == 'CM' or group_type_tag == 'DM' or group_type_tag == 'BM' %}
+                            <div class="form-group">
+                               <label class="col-sm-2 control-label">选择公司名称<span class="red-fonts">*</span> </label>
+                                <div class="col-sm-8">
+                                    <label>
+                                        <select name="company_id" class="form-control m-b input-sm" onchange="change_info()">
+                                            <option value="">公司名称</option>
+                                            {% for company_list in company_all %}
+                                                {% ifequal company_list.id|int2str  company_id %}
+                                                    <option value="{{ company_list.id }}" selected> {{ company_list.name|slice:":20" }} </option>
+                                                {% else %}
+                                                    {% if  username == 'admin' %}
+                                                        <option value="{{ company_list.id }}" > {{ company_list.name|slice:":20" }} </option>
+                                                    {% else %}
+                                                        <option value="{{ company_list.id }}" disabled="disabled"> {{ company_list.name|slice:":20" }} </option>
+                                                    {% endif %}
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                             <!--新增在添加组时选择指定的部门:2016-06-02-->
+                            {% if group_type_tag == 'DM' or group_type_tag == 'BM' %}
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">选择部门名称<span class="red-fonts">*</span> </label>
+                                <div class="col-sm-8">
+                                    <label>
+                                        <select name="department_id" class="form-control m-b input-sm" onchange="change_info()">
+                                            <option value="">部门名称</option>
+                                            {% for department_list in department_select %}
+                                                {% ifequal department_list.id|int2str department_id %}
+                                                    <option value="{{ department_list.id }}" selected> {{ department_list.name|slice:":20" }} </option>
+                                                {% else %}
+                                                    <option value="{{ department_list.id }}"> {{ department_list.name|slice:":20" }} </option>
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+                            <!--新增在添加组时选择指定的业务:2016-06-02-->
+                            {% if group_type_tag == 'BM' %}
+                            <div class="form-group">
+                                <label class="col-sm-2 control-label">选择业务名称<span class="red-fonts">*</span> </label>
+                                <div class="col-sm-8">
+                                    <label>
+                                        <select name="business_id" class="form-control m-b input-sm" onchange="change_info()">
+                                            <option value="">业务名称</option>
+                                            {% for business_list in business_select %}
+                                                {% ifequal business_list.id|int2str business_id %}
+                                                    <option value="{{ business_list.id }}" selected> {{ business_list.name|slice:":20" }} </option>
+                                                {% else %}
+                                                    <option value="{{ business_list.id }}"> {{ business_list.name|slice:":20" }} </option>
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            <div class="hr-line-dashed"></div>
                             <div class="form-group">
                                 <label for="group_name" class="col-sm-2 control-label">用户组名<span class="red-fonts">*</span></label>
                                 <div class="col-sm-8">
                                     <input id="group_name" name="group_name" placeholder="User Group Name" type="text" class="form-control" value="{{ group_name }}">
                                 </div>
                             </div>
-                            
+
                             <div class="hr-line-dashed"></div>
                             <div class="form-group">
                                 <label for="users" class="col-sm-2 control-label">用户</label>
@@ -59,7 +145,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="hr-line-dashed"></div>
                             <div class="form-group">
                                 <label for="comment" class="col-sm-2 control-label">备注</label>
                                 <div class="col-sm-8">
@@ -116,6 +201,10 @@ $(document).ready(function(){
     })
 })
 
+    function change_info(){
+        var args = $("#groupForm").serialize();
+        window.location = "{% url 'user_group_add' %}?" + args
+    }
 
 </script>
 {% endblock %}

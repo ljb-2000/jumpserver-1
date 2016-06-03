@@ -84,6 +84,24 @@
                                     {% endfor %}
                                 </div>
                             </div>
+                             <!--新增用户下面选择公司:2016-06-01-->
+                            <div class="form-group">
+                               <label class="col-sm-2 control-label">选择公司名称<span class="red-fonts">*</span> </label>
+                                <div class="col-sm-8">
+                                    <label>
+                                        <select name="company_id" class="form-control m-b input-sm" onchange="">
+                                            <option value="">公司名称</option>
+                                            {% for company_list in company_all %}
+                                                {% ifequal company_list.name group_name %}
+                                                    <option value="{{ company_list.id }}" selected> {{ company_list.name|slice:":20" }} </option>
+                                                {% else %}
+                                                    <option value="{{ company_list.id }}"> {{ company_list.name|slice:":20" }} </option>
+                                                {% endifequal %}
+                                            {% endfor %}
+                                        </select>
+                                    </label>
+                                </div>
+                            </div>
                             {% endifequal %}
                             <div class="hr-line-dashed"></div>
                             <div class="form-group">

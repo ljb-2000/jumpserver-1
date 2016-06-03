@@ -180,6 +180,10 @@
                                         </td>
                                     </tr>
                                     <tr>
+                                        <td class="text-navy">负责人</td>
+                                        <td>{{ asset.principal|default_if_none:"" }}</td>
+                                    </tr>
+                                    <tr>
                                         <td class="text-navy">邮件地址</td>
                                         <td>{{ asset.email|default_if_none:"" }}</td>
                                     </tr>
