@@ -85,6 +85,7 @@ def db_add_user(**kwargs):
             group_select.extend(group)
         user.group_asset = group_select
 
+
     if admin_groups and role == 'GA':  # 如果是组管理员就要添加组管理员和组到管理组中
         for group_id in admin_groups:
             group = get_object(UserGroup, id=group_id)
@@ -98,7 +99,7 @@ def db_update_user(**kwargs):
     update a user info in database
     数据库更新用户信息
     """
-    groups_post = kwargs.pop('groups')
+    # groups_post = kwargs.pop('groups')
     admin_groups_post = kwargs.pop('admin_groups')
     user_id = kwargs.pop('user_id')
     user = User.objects.filter(id=user_id)
@@ -113,11 +114,11 @@ def db_update_user(**kwargs):
         return None
 
     group_select = []
-    if groups_post:
-        for group_id in groups_post:
-            group = CMDB_Group.objects.filter(id=group_id)
-            group_select.extend(group)
-    user_get.group_asset = group_select
+    # if groups_post:
+    #     for group_id in groups_post:
+    #         group = CMDB_Group.objects.filter(id=group_id)
+    #         group_select.extend(group)
+    # user_get.group_asset = group_select
 
     if admin_groups_post != '':
         user_get.admingroup_set.all().delete()
@@ -253,4 +254,29 @@ def cmdb_group_check(company_name_id,user_id):
                 role_type_list.append(3)
     return role_type_list
 
+def check_user_goups(user_id):
+    """
+    检查用户属于那些用户组,这些用户组所属的部门，这些用户组所属的业务
+    :param user_id:
+    :return: group_id_list_for_departmanager = [1,2],department_id_list_for_departmanager = [],business_id_list_for_departmanager = []
+    """
+    group_id_list = []
+    department_id_list = []
+    business_id_list = []
+    groups = User.objects.get(id__exact=user_id).group_asset.all()
+    for group in groups:
+        if group.id != None:
+            group_id_list.append(group.id)
+        if group.department_name_id != None:
+            department_id_list.append(group.department_name_id)
+        if group.business_name_id != None:
+            business_id_list.append(group.business_name_id)
+    print "juser.user_api.py:department_id_list:274:",department_id_list
+    print "juser.user_api.py:group_id_list:275:",group_id_list
+    print "juser.user_api.py:business_id_list:276:",business_id_list
+    func1 = lambda x,y:x if y == '' else x + [y]
+    group_id_list = reduce(func1, [[], ] + group_id_list)
+    department_id_list = reduce(func1, [[], ] + department_id_list)
+    business_id_list = reduce(func1, [[], ] + business_id_list)
+    return group_id_list,department_id_list,business_id_list
 

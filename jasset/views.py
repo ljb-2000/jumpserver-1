@@ -11,7 +11,7 @@ import json
 from django.http import HttpResponse
 #导入juser应用的用户表,控制CMDB主机访问
 from juser.models import User,CMDB_Group
-from juser.user_api import cmdb_group_check
+from juser.user_api import cmdb_group_check,check_user_goups
 
 @require_role('admin')
 def group_add(request):
@@ -315,6 +315,9 @@ def asset_list(request):
             department_id_list.append(department_list.department_name_id)
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
+        #获取该用户所在部门下面的所有业务id列表
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+
     if group_id:
         group = get_object(AssetGroup, id=group_id)
         if group:
@@ -1099,6 +1102,11 @@ def business_add(request):
     company_id = request.GET.get('company_id', '')
     department_select = None
     smg = u'业务名称不能为空'
+    #通过获取用户名，用户的公司ID,过滤业务名称列表
+    username = request.user.name
+    user_id = request.user.id
+    company_name = request.user.company_name
+    company_id_from_user = request.user.company_name_id
     if company_id:
         department = AssetRelation.objects.all().filter(company_name_id__exact=company_id)
         company_name = get_object(CompanyName, id=company_id)
@@ -1109,7 +1117,13 @@ def business_add(request):
             department_id_list.append(department_list.department_name_id)
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
-
+        #获取该用户所在部门下面的所有业务id列表
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        if department_id_list_for_departmanager:
+            department_select = department_select.filter(pk__in=department_id_list_for_departmanager)
+    #过滤公司名称，只显示本公司的部门信息
+    if username != 'admin':
+       company_all = company_all.filter(name=company_name)
     if request.method == 'POST':
         name = request.POST.get('name', '')
         asset_select = request.POST.getlist('asset_select', [])
@@ -1222,6 +1236,10 @@ def business_list(request):
         business_name_list = BusinessName.objects.filter(pk__in=business_id_list)
     #过滤条件1：过滤公司1，过滤条件2：过滤角色类型ID为2的用户组
     user_name_list = check_business_manager_level_user(company_name_id=company_id_from_user,role_type_id=2)
+    #获取该用户所在部门下面的所有业务id列表
+    group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+    business_id_list_for_edit = check_business_of_department(department_id_list = department_id_list_for_departmanager)
+
     if department_id:
         business =  AssetRelation.objects.all().filter(department_name_id__exact=department_id)
         business_id_list = []

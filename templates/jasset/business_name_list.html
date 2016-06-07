@@ -28,7 +28,9 @@
                     <div class="">
                         {% if username in user_name_list or username == 'admin' %}
                         <a href="{% url 'asset_business_add' %}" class="btn btn-sm btn-primary "> 添加业务名称 </a>
-                        <a class="btn btn-sm btn-danger" id="del_check"> 删除所选 </a>
+                            {% if  username == 'admin' %}
+                            <a class="btn btn-sm btn-danger" id="del_check"> 删除所选 </a>
+                            {% endif %}
                         {% endif %}
                         <form id="search_form" method="get" action="" class="pull-right mail-search">
                             <div class="input-group">
@@ -67,8 +69,10 @@
                                 <td class="text-center"> {{ asset_business.comment }} </td>
                                 <td class="text-center">
                                     {% if username in user_name_list or username == 'admin' %}
-                                    <a href="{% url 'asset_business_edit' %}?id={{ asset_business.id }}" class="btn btn-xs btn-info">编辑</a>
-                                    <a value="{% url 'asset_business_del' %}?id={{ asset_business.id }}" class="btn btn-xs btn-danger group_del">删除</a>
+                                        {% if asset_business.id|int2str in business_id_list_for_edit %}
+                                            <a href="{% url 'asset_business_edit' %}?id={{ asset_business.id }}" class="btn btn-xs btn-info">编辑</a>
+                                            <a value="{% url 'asset_business_del' %}?id={{ asset_business.id }}" class="btn btn-xs btn-danger group_del">删除</a>
+                                        {% endif %}
                                     {% endif %}
                                 </td>
                             </tr>

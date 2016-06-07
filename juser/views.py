@@ -47,7 +47,10 @@ def group_add(request):
             department_id_list.append(department_list.department_name_id)
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
-        #根据部门，显示该部门的业务信息列表
+        #获取该用户对应的部门，业务列表
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        if department_id_list_for_departmanager:
+            department_select = department_select.filter(pk__in=department_id_list_for_departmanager)
     #从前端通过用户的部门选择事件，获取该部门的ID,通过部门ID，获取对应的业务ID列表
     department_id = request.GET.get("department_id", '')
     business_id = request.GET.get("business_id")
@@ -79,9 +82,14 @@ def group_add(request):
     func = lambda x,y:x if y in x else x + [y]
     user_name_list = reduce(func, [[], ] + user_name_list)
     print "juser.views.py:user_name_list:79:",user_name_list
-    #如果这个用户在公司管理员组授权的组中，则只group_types只赋值为CM
-    if username in user_name_list:
-        group_types = {'DM': u"部门级别组"}
+    print "juser.views.py:role_type_list:82:",role_type_list
+    #根据用户的role_type_list来判断添加什么类型的用户组
+    group_types = {}
+    for role_type in role_type_list:
+        if role_type == 1:
+            group_types['DM'] = u"部门级别组"
+        if role_type == 2:
+            group_types['BM'] = u"业务级别组"
     if username == 'admin':
         group_types = {'CM': u"公司级别组",'DM': u"部门级别组", 'BM': u"业务级别组"}
     if department_id:
@@ -177,10 +185,18 @@ def group_list(request):
             group_type_list.append('DM')
         if role_type == 2:
             group_type_list.append('BM')
-    print "juser.views.py:group_type_list:177:",group_type_list
+    print "juser.views.py:group_type_list:180:",group_type_list
+    print "juser.views.py:user_group_list:181:",user_group_list
     if username != 'admin':
         if group_type_list:
             user_group_list = user_group_list.filter(group_type__in=group_type_list)
+            print "juser.views.py:user_group_list:185:",user_group_list
+        #部门管理员角色，通过查询该用户属于那个部门来控制只显示本部门下面的业务管理员组,通过用户组属于不同的部门业务来控制权限
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        print "juser.views.py:department_id_list_for_departmanager:186:",department_id_list_for_departmanager
+        if department_id_list_for_departmanager:
+            user_group_list = user_group_list.filter(department_name_id__in=department_id_list_for_departmanager)
+
     if keyword:
         user_group_list = user_group_list.filter(Q(name__icontains=keyword) | Q(comment__icontains=keyword))
 
@@ -283,6 +299,10 @@ def user_add(request):
     if username != 'admin':
         if group_type_list:
             group_all = group_all.filter(group_type__in=group_type_list).filter(company_name_id__exact=company_id)
+            #获取该用户对应的部门，业务列表
+            group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+            if department_id_list_for_departmanager:
+                group_all = group_all.filter(department_name_id__in=department_id_list_for_departmanager)
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = PyCrypt.gen_rand_pass(16)
@@ -504,14 +524,13 @@ def user_edit(request):
         password = request.POST.get('password', '')
         name = request.POST.get('name', '')
         email = request.POST.get('email', '')
-        groups = request.POST.getlist('groups', [])
+        # groups = request.POST.getlist('groups', [])
         role_post = request.POST.get('role', 'CU')
         admin_groups = request.POST.getlist('admin_groups', [])
         extra = request.POST.getlist('extra', [])
         is_active = True if '0' in extra else False
         email_need = True if '2' in extra else False
         user_role = {'SU': u'超级管理员', 'GA': u'部门管理员', 'CU': u'普通用户'}
-
         if user_id:
             user = get_object(User, id=user_id)
         else:
@@ -526,7 +545,7 @@ def user_edit(request):
                        password=password,
                        name=name,
                        email=email,
-                       groups=groups,
+                       # groups=groups,
                        admin_groups=admin_groups,
                        role=role_post,
                        is_active=is_active)

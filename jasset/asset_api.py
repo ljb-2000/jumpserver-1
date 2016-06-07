@@ -740,6 +740,7 @@ def company_id_filter_business(company_name_id):
     for business_list in business:
         businesst_id_list.append(business_list.business_name_id)
     return businesst_id_list
+
 def check_business_manager_level_user(company_name_id,role_type_id):
     user_name_list = []
     group_id_list = []
@@ -762,3 +763,19 @@ def check_business_manager_level_user(company_name_id,role_type_id):
     user_name_list = reduce(func, [[], ] + user_name_list)
     print "jasset.asset_api.py:user_name_list:763:",user_name_list
     return user_name_list
+
+def check_business_of_department(department_id_list):
+    """
+    获取指定部门列表包含的业务ID信息
+    :param department_id_list:-传入参数为部门id列表
+    :return: 返回业务id列表 business_id_list_for_edit = [1,2]
+    """
+    business_id_list = []
+    for department_id in department_id_list:
+        AssetRelation_obj = AssetRelation.objects.filter(department_name_id__exact=department_id)
+        for obj in AssetRelation_obj:
+            business_id_list.append(obj.business_name_id)
+    func1 = lambda x,y:x if y == '' else x + [y]
+    business_id_list = reduce(func1, [[], ] + business_id_list)
+    print "jasset.asset_api.py:business_id_list:778:",business_id_list
+    return business_id_list
