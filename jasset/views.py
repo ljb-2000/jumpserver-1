@@ -11,7 +11,7 @@ import json
 from django.http import HttpResponse
 #导入juser应用的用户表,控制CMDB主机访问
 from juser.models import User,CMDB_Group
-from juser.user_api import cmdb_group_check,check_user_goups
+from juser.user_api import cmdb_group_check,check_user_groups
 
 @require_role('admin')
 def group_add(request):
@@ -316,7 +316,9 @@ def asset_list(request):
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
         #获取该用户所在部门下面的所有业务id列表
-        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
+        if business_id_list_for_departmanager:
+            acl_asset_id_list = check_asset_id_from_business_id(business_id_list = business_id_list_for_departmanager)
 
     if group_id:
         group = get_object(AssetGroup, id=group_id)
@@ -580,6 +582,7 @@ def asset_detail(request):
     asset = get_object(Asset, id=asset_id)
     perm_info = get_group_asset_perm(asset)
     log = Log.objects.filter(host=asset.hostname)
+    username = request.user.name
     if perm_info:
         user_perm = []
         for perm, value in perm_info.items():
@@ -1118,7 +1121,7 @@ def business_add(request):
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
         #获取该用户所在部门下面的所有业务id列表
-        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
         if department_id_list_for_departmanager:
             department_select = department_select.filter(pk__in=department_id_list_for_departmanager)
     #过滤公司名称，只显示本公司的部门信息
@@ -1237,7 +1240,7 @@ def business_list(request):
     #过滤条件1：过滤公司1，过滤条件2：过滤角色类型ID为2的用户组
     user_name_list = check_business_manager_level_user(company_name_id=company_id_from_user,role_type_id=2)
     #获取该用户所在部门下面的所有业务id列表
-    group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+    group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
     business_id_list_for_edit = check_business_of_department(department_id_list = department_id_list_for_departmanager)
 
     if department_id:

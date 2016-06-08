@@ -25,9 +25,9 @@
                 <div class="ibox-content">
                     <form id="asset_form">
                         <div class="col-sm-1" style="padding-left: 0" >
-                            {% if username in user_name_list or username == 'admin' %}
+
                             <a href="{% url 'asset_add' %}" class="btn btn-sm btn-primary "> 添加资产 </a>
-                            {% endif %}
+
                         </div>
 
                         <div class="col-sm-7" style="padding-left: 0px">
@@ -204,7 +204,7 @@
                                     <td class="text-center"> {{ asset.memory|default_if_none:"" }}{% if asset.memory %}G{% endif %}</td>
                                     <td class="text-center"> {{ asset.disk|get_disk_info }}{% if asset.disk %}G{% endif %}</td>
                                     <td class="text-center" data-editable='false'>
-                                        {% if username in user_name_list or username == 'admin' %}
+                                        {% if asset.id in acl_asset_id_list or username == 'admin' %}
                                         <a href="{% url 'asset_edit' %}?id={{ asset.id }}" class="btn btn-xs btn-info">编辑</a>
                                         <!--<a value="{{ asset.id }}" class="conn btn btn-xs btn-warning">连接</a>-->
                                         <a value="{% url 'asset_del' %}?id={{ asset.id }}" class="btn btn-xs btn-danger asset_del">删除</a>
@@ -216,7 +216,7 @@
                         </table>
                         <div class="row">
                             <div class="col-sm-6">
-                                {% if username in user_name_list or username == 'admin' %}
+                                {% if business_id in business_id_list_for_departmanager  or username == 'admin' %}
                                 <input type="button" id="asset_del" class="btn btn-danger btn-sm"  name="del_button" value="删除"/>
                                 <a value="{% url 'asset_edit_batch' %}" type="button" class="btn btn-sm btn-warning iframe">修改</a>
                                 <!--

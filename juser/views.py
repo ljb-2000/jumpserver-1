@@ -48,7 +48,7 @@ def group_add(request):
         #部门ID去重，根据部门ID查询对应的部门信息
         department_select = DepartmentName.objects.filter(pk__in=department_id_list)
         #获取该用户对应的部门，业务列表
-        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
         if department_id_list_for_departmanager:
             department_select = department_select.filter(pk__in=department_id_list_for_departmanager)
     #从前端通过用户的部门选择事件，获取该部门的ID,通过部门ID，获取对应的业务ID列表
@@ -90,15 +90,20 @@ def group_add(request):
             group_types['DM'] = u"部门级别组"
         if role_type == 2:
             group_types['BM'] = u"业务级别组"
+        if role_type == 3:
+            group_types['BM_SERVER_EDIT'] = u"业务级别-服务器编辑组"
     if username == 'admin':
-        group_types = {'CM': u"公司级别组",'DM': u"部门级别组", 'BM': u"业务级别组"}
+        group_types = {'CM': u"公司级别组",'DM': u"部门级别组", 'BM': u"业务级别组",'BM_SERVER_EDIT':u"业务级别-服务器编辑组"}
     if department_id:
         business =  AssetRelation.objects.all().filter(department_name_id__exact=department_id)
         businesst_id_list = []
         for business_list in business:
             businesst_id_list.append(business_list.business_name_id)
         business_select = BusinessName.objects.filter(pk__in=businesst_id_list)
-
+        #部门管理员角色，通过查询该用户属于那个部门来控制只显示本部门下面的业务管理员组,通过用户组属于不同的部门业务来控制权限
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
+        if business_id_list_for_departmanager:
+            business_select = business_select.filter(pk__in=business_id_list_for_departmanager)
     if request.method == 'POST':
         group_name = request.POST.get('group_name', '')
         users_selected = request.POST.getlist('users_selected', '')
@@ -112,9 +117,9 @@ def group_add(request):
         company_name = CompanyName.objects.get(id=int(company_name_id)).name
         department_name = ''
         business_name = ''
-        if group_type == 'DM' or group_type == 'BM':
+        if group_type == 'DM' or group_type == 'BM' or group_type == 'BM_SERVER_EDIT':
             department_name = DepartmentName.objects.get(id=int(department_name_id)).name
-        if group_type == 'BM':
+        if group_type == 'BM' or group_type == 'BM_SERVER_EDIT':
             business_name = BusinessName.objects.get(id=int(business_name_id)).name
 
         try:
@@ -185,6 +190,8 @@ def group_list(request):
             group_type_list.append('DM')
         if role_type == 2:
             group_type_list.append('BM')
+        if role_type == 3:
+            group_type_list.append('BM_SERVER_EDIT')
     print "juser.views.py:group_type_list:180:",group_type_list
     print "juser.views.py:user_group_list:181:",user_group_list
     if username != 'admin':
@@ -192,10 +199,12 @@ def group_list(request):
             user_group_list = user_group_list.filter(group_type__in=group_type_list)
             print "juser.views.py:user_group_list:185:",user_group_list
         #部门管理员角色，通过查询该用户属于那个部门来控制只显示本部门下面的业务管理员组,通过用户组属于不同的部门业务来控制权限
-        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+        group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
         print "juser.views.py:department_id_list_for_departmanager:186:",department_id_list_for_departmanager
         if department_id_list_for_departmanager:
             user_group_list = user_group_list.filter(department_name_id__in=department_id_list_for_departmanager)
+        if business_id_list_for_departmanager:
+            user_group_list = user_group_list.filter(business_name_id__in=business_id_list_for_departmanager)
 
     if keyword:
         user_group_list = user_group_list.filter(Q(name__icontains=keyword) | Q(comment__icontains=keyword))
@@ -295,14 +304,18 @@ def user_add(request):
             group_type_list.append('DM')
         if role_type == 2:
             group_type_list.append('BM')
+        if role_type == 3:
+            group_type_list.append('BM_SERVER_EDIT')
     print "juser.views.py:group_type_list:177:",group_type_list
     if username != 'admin':
         if group_type_list:
             group_all = group_all.filter(group_type__in=group_type_list).filter(company_name_id__exact=company_id)
             #获取该用户对应的部门，业务列表
-            group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_goups(user_id=user_id)
+            group_id_list_for_departmanager,department_id_list_for_departmanager,business_id_list_for_departmanager = check_user_groups(user_id=user_id)
             if department_id_list_for_departmanager:
                 group_all = group_all.filter(department_name_id__in=department_id_list_for_departmanager)
+            if business_id_list_for_departmanager:
+                 group_all = group_all.filter(business_name_id__in=business_id_list_for_departmanager)
     if request.method == 'POST':
         username = request.POST.get('username', '')
         password = PyCrypt.gen_rand_pass(16)

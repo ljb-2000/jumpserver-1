@@ -779,3 +779,23 @@ def check_business_of_department(department_id_list):
     business_id_list = reduce(func1, [[], ] + business_id_list)
     print "jasset.asset_api.py:business_id_list:778:",business_id_list
     return business_id_list
+
+def check_asset_id_from_business_id(business_id_list):
+    """
+    输入业务id列表，检查这些业务下面的服务器id列表
+    :param business_id_list:
+    :return: acl_asset_id_list = [1,2]
+    """
+    acl_asset_id_list = []
+    for business_id in business_id_list:
+        business_01 = BusinessName.objects.filter(id=business_id)
+        for business_list in business_01:
+            for asset in business_list.asset_set.all():
+                acl_asset_id_list.append(asset.id)
+    #去掉空的asset_id元素
+    func1 = lambda x,y:x if y == '' else x + [y]
+    acl_asset_id_list = reduce(func1, [[], ] + acl_asset_id_list)
+    #去掉重复的asset_id
+    func = lambda x,y:x if y in x else x + [y]
+    acl_asset_id_list = reduce(func, [[], ] + acl_asset_id_list)
+    return acl_asset_id_list

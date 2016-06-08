@@ -50,7 +50,7 @@
                                 </div>
                             </div>
                             <!--新增在添加组时选择指定的公司:2016-06-02-->
-                            {% if group_type_tag == 'CM' or group_type_tag == 'DM' or group_type_tag == 'BM' %}
+                            {% if group_type_tag == 'CM' or group_type_tag == 'DM' or group_type_tag == 'BM' or group_type_tag == 'BM_SERVER_EDIT' %}
                             <div class="form-group">
                                <label class="col-sm-2 control-label">选择公司名称<span class="red-fonts">*</span> </label>
                                 <div class="col-sm-8">
@@ -74,7 +74,7 @@
                             </div>
                             {% endif %}
                              <!--新增在添加组时选择指定的部门:2016-06-02-->
-                            {% if group_type_tag == 'DM' or group_type_tag == 'BM' %}
+                            {% if group_type_tag == 'DM' or group_type_tag == 'BM' or group_type_tag == 'BM_SERVER_EDIT' %}
                             <div class="form-group">
                                 <label class="col-sm-2 control-label">选择部门名称<span class="red-fonts">*</span> </label>
                                 <div class="col-sm-8">
@@ -94,7 +94,7 @@
                             </div>
                             {% endif %}
                             <!--新增在添加组时选择指定的业务:2016-06-02-->
-                            {% if group_type_tag == 'BM' %}
+                            {% if group_type_tag == 'BM' or group_type_tag == 'BM_SERVER_EDIT' %}
                             <div class="form-group">
                                 <label class="col-sm-2 control-label">选择业务名称<span class="red-fonts">*</span> </label>
                                 <div class="col-sm-8">

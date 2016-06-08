@@ -254,7 +254,7 @@ def cmdb_group_check(company_name_id,user_id):
                 role_type_list.append(3)
     return role_type_list
 
-def check_user_goups(user_id):
+def check_user_groups(user_id):
     """
     检查用户属于那些用户组,这些用户组所属的部门，这些用户组所属的业务
     :param user_id:
