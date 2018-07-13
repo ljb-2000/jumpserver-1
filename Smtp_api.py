@@ -4,12 +4,12 @@
 import smtplib
 from email.mime.text import MIMEText
 #定义发送列表
-mailto_list=["342304628@qq.com"]
+mailto_list=["348@qq.com"]
 # 设置服务器名称、用户名、密码以及邮件后缀
-mail_host = "smtp.xiaoniu66.com:25"
-mail_user = "ouyangbin@xiaoniu66.com"
-mail_pass = "oyb,p@ssw0rd"
-mail_postfix="xiaoniu66.com"
+mail_host = "smtp.xxxx.com:25"
+mail_user = "on@xx.com"
+mail_pass = "o"
+mail_postfix="xx"
 
 # 发送邮件函数
 def send_mail(to_list, sub):
